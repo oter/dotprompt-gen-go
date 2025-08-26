@@ -1,0 +1,39 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+        description: List of tags
+      scores:
+        type: array
+        items:
+          type: number
+        description: List of scores
+      ids:
+        type: array
+        items:
+          type: integer
+        description: List of IDs
+    required: [tags]
+output:
+  schema:
+    type: object
+    properties:
+      results:
+        type: array
+        items:
+          type: string
+        description: Processed results
+      counts:
+        type: array
+        items:
+          type: integer
+        description: Result counts
+    required: [results]
+---
+Process tags: {{#each tags}}{{this}} {{/each}}

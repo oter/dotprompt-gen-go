@@ -1,0 +1,8 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    query: string, the search query
+    limit?: integer, optional result limit
+---
+Search for: {{query}}

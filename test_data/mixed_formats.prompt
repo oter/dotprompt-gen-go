@@ -1,0 +1,33 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    # Picoschema format for input
+    user_id: string, the user identifier
+    preferences: string(array): string, user preferences  
+    role: string(enum): [admin, user, guest], user role
+    settings?: any, optional user settings
+output:
+  # JSON Schema format for output
+  schema:
+    type: object
+    properties:
+      user_profile:
+        type: object
+        properties:
+          id:
+            type: string
+          role:
+            type: string
+            enum: [admin, user, guest]
+      recommendations:
+        type: array
+        items:
+          type: string
+      success:
+        type: boolean
+    required:
+      - user_profile
+      - success
+---
+Generate profile for user {{user_id}} with role {{role}}.
