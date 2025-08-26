@@ -1,0 +1,16 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    name: string, the user name
+    age: integer, user age
+    height: number, user height
+    active: boolean, whether user is active
+    metadata: any, additional metadata
+    optional_field?: string, optional field
+output:
+  schema:
+    success: boolean, operation success
+    message: string, result message
+---
+Process this data: {{name}} is {{age}} years old.

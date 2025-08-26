@@ -1,0 +1,150 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: false
+
+issues:
+  max-issues-per-linter: 0 # unlimited
+  max-same-issues: 50
+  new: false # show all issues, not just new ones
+
+linters:
+  default: none
+  enable:
+    - tagliatelle
+    - asciicheck
+    - bodyclose
+    - depguard
+    - dogsled
+    - errcheck
+    - funlen
+    - gochecknoinits
+    - gocognit
+    - gocritic
+    - gocyclo
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - noctx
+    - nolintlint
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+  settings:
+    tagliatelle:
+      case:
+        rules:
+          avro: snake
+          bson: snake
+          env: upperSnake
+          envconfig: upperSnake
+          json: snake
+          mapstructure: snake
+          xml: snake
+          yaml: snake
+
+    depguard:
+      rules:
+        pkgerr:
+          deny:
+            - pkg: github.com/pkg/errors
+              desc: Use errors instead of pkg/errors
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+    funlen:
+      lines: 320
+      statements: 120
+    gocognit:
+      min-complexity: 110
+    gocyclo:
+      min-complexity: 65
+    lll:
+      line-length: 270
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: false
+      require-specific: false
+      allow-unused: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - errcheck
+          - gocyclo
+          - gosec
+        path: _mock\.go
+      - linters:
+          - gocritic
+        text: deprecatedComment
+      - linters:
+          - gocritic
+        text: commentedOutCode
+      - linters:
+          - lll
+        source: ^\s+// [(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b[-a-zA-Z0-9@:%_\+.~#?&//=]*
+      - linters:
+          - lll
+        source: "^//go:generate "
+    paths:
+      - api
+      - ent
+      - tools
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofumpt
+    - gofmt
+    - goimports
+    - golines
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/oter/dotprompt-gen-go)
+    gofumpt:
+      module-path: github.com/oter/dotprompt-gen-go
+      extra-rules: true
+    gofmt:
+      rewrite-rules:
+        - pattern: "interface{}"
+          replacement: "any"
+    goimports:
+      local-prefixes:
+        - github.com/oter/dotprompt-gen-go
+    golines:
+      shorten-comments: true
+  exclusions:
+    generated: lax
+    paths:
+      - api
+      - ent
+      - tools
+      - third_party$
+      - builtin$
+      - examples$

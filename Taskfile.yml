@@ -1,0 +1,77 @@
+version: "3"
+
+vars:
+  BINARY_NAME: dotprompt-gen-go
+  BUILD_DIR: .bin
+  MAIN_PACKAGE: .
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the binary
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_PACKAGE}}
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./...
+
+  test-coverage:
+    desc: Run tests with coverage
+    cmds:
+      - go test -v -race -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+      - rm -f coverage.out coverage.html
+
+  deps:
+    desc: Download dependencies
+    cmds:
+      - go mod download
+      - go mod tidy
+
+  fmt:
+    desc: Format code using golangci-lint formatters
+    cmds:
+      - golangci-lint run --fix
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run
+
+  lint-fix:
+    desc: Run golangci-lint with auto-fix
+    cmds:
+      - golangci-lint run --fix
+
+  check:
+    desc: Run all checks (lint, test)
+    deps:
+      - lint
+      - test
+
+  run:
+    desc: Run the application with example arguments
+    cmds:
+      - go run {{.MAIN_PACKAGE}} -h
+
+  dev:
+    desc: Development workflow - lint with fix, test, and build
+    deps:
+      - lint-fix
+      - test
+      - build

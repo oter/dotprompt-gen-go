@@ -1,0 +1,30 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    type: object
+    properties:
+      keywords:
+        type: array
+        items:
+          type: string
+        description: List of keywords
+      ratings:
+        type: array
+        items:
+          type: number
+        description: List of ratings
+output:
+  schema:
+    type: object
+    properties:
+      matched_keywords:
+        type: array
+        items:
+          type: string
+        description: Keywords that matched
+      average_rating:
+        type: number
+        description: Average of all ratings
+---
+Process keywords: {{#each keywords}}{{this}} {{/each}}

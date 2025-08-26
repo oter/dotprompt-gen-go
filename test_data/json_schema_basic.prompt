@@ -1,0 +1,37 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    type: object
+    properties:
+      habit:
+        type: string
+        description: The habit to analyze
+      category:
+        type: string
+        enum: [physical, mental, social]
+        description: Habit category
+      word_count:
+        type: integer
+        description: Number of words
+    required:
+      - habit
+      - category
+output:
+  schema:
+    type: object
+    properties:
+      summary:
+        type: string
+        description: Generated summary
+      confidence:
+        type: number
+        description: Confidence score
+      valid:
+        type: boolean
+        description: Whether the input is valid
+    required:
+      - summary
+      - valid
+---
+Analyze habit: {{habit}}

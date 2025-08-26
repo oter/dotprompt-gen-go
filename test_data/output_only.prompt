@@ -1,0 +1,9 @@
+---
+model: openai/gpt-4
+output:
+  schema:
+    generated_text: string, the generated response
+    word_count: integer, number of words generated
+    quality_score?: number, optional quality assessment
+---
+Generate creative content based on the input.

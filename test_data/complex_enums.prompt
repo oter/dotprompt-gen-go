@@ -1,0 +1,34 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    type: object
+    properties:
+      difficulty:
+        type: string
+        enum: [very-easy, easy, medium, hard, very-hard]
+        description: Complexity level
+      language:
+        type: string
+        enum: [en, es, fr, de, ja, zh-cn]
+        description: Target language
+      format:
+        type: string
+        enum: [json, xml, yaml, csv]
+        description: Output format preference
+    required: [difficulty, language, format]
+output:
+  schema:
+    type: object
+    properties:
+      processing_status:
+        type: string
+        enum: [queued, processing, completed, failed, cancelled]
+        description: Processing status
+      error_code:
+        type: string
+        enum: [timeout, invalid_input, server_error, rate_limit]
+        description: Error code if any
+    required: [processing_status]
+---
+Process in {{language}} with {{difficulty}} level.
