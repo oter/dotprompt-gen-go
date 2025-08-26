@@ -76,7 +76,7 @@ jobs:
           version: 3.x
 
       - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           install-mode: "binary"
@@ -141,7 +141,7 @@ jobs:
           go-version: "1.25"
 
       - name: Run Gosec Security Scanner
-        uses: securecodewarrior/github-action-gosec@master
+        uses: securego/gosec@master
         with:
           args: "-no-fail -fmt sarif -out results.sarif ./..."
 
