@@ -1,4 +1,4 @@
-package main
+package model
 
 // PromptFile represents a parsed dotprompt file
 type PromptFile struct {

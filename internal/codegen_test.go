@@ -1,10 +1,14 @@
-package main
+package internal_test
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/oter/dotprompt-gen-go/internal/generator"
+	"github.com/oter/dotprompt-gen-go/internal/model"
+	"github.com/oter/dotprompt-gen-go/internal/schema"
 )
 
 // TestCase represents a single test case for code generation
@@ -98,7 +102,7 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 		"required": []any{"level1", "root_value"},
 	}
 
-	fields, enums, structs, err := ParseSchemaWithStructs(deeplyNestedSchema, []string{"level1", "root_value"})
+	fields, enums, structs, err := schema.ParseSchemaWithStructs(deeplyNestedSchema, []string{"level1", "root_value"})
 	if err != nil {
 		t.Fatalf("Failed to parse deeply nested schema: %v", err)
 	}
@@ -136,7 +140,7 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 	}
 
 	// Verify the deepest struct has the final fields
-	var deepestStruct *GoStruct
+	var deepestStruct *model.GoStruct
 	for i := range structs {
 		if strings.Contains(structs[i].Name, "Level4") {
 			deepestStruct = &structs[i]
@@ -243,7 +247,7 @@ func TestCodegenRealisticDeeplyNestedStructs(t *testing.T) {
 		"required": []any{"classification"},
 	}
 
-	_, enums, structs, err := ParseSchemaWithStructs(realisticSchema, []string{"classification"})
+	_, enums, structs, err := schema.ParseSchemaWithStructs(realisticSchema, []string{"classification"})
 	if err != nil {
 		t.Fatalf("Failed to parse realistic nested schema: %v", err)
 	}
@@ -292,13 +296,13 @@ func TestGeneratedCodeCompiles(t *testing.T) {
 		"required": []any{"level1"},
 	}
 
-	fields, enums, structs, err := ParseSchemaWithStructs(deepSchema, []string{"level1"})
+	fields, enums, structs, err := schema.ParseSchemaWithStructs(deepSchema, []string{"level1"})
 	if err != nil {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
 
 	// Generate Go code
-	code, err := GenerateGoCode(structs, enums, "testpkg")
+	code, err := generator.GenerateGoCode(structs, enums, "testpkg")
 	if err != nil {
 		t.Fatalf("Failed to generate Go code: %v", err)
 	}
@@ -473,16 +477,16 @@ func TestCodegenAllTypes(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			// Run codegen on test file
-			inputFile := filepath.Join("test_data", tc.PromptFile)
+			inputFile := filepath.Join("testdata", tc.PromptFile)
 			outputFile := filepath.Join(tempDir, strings.TrimSuffix(tc.PromptFile, ".prompt")+".gen.go")
 
-			generator := Generator{
+			gen := model.Generator{
 				PackageName: "models",
 				OutputDir:   tempDir,
 				Verbose:     false,
 			}
 
-			err := generator.ProcessFile(inputFile)
+			err := generator.ProcessFile(gen, inputFile)
 			if err != nil {
 				t.Fatalf("Code generation failed: %v", err)
 			}
@@ -548,14 +552,14 @@ func TestCodegenAllTypes(t *testing.T) {
 // TestEdgeCases tests various edge cases
 func TestEdgeCases(t *testing.T) {
 	tempDir := t.TempDir()
-	generator := Generator{
+	gen := model.Generator{
 		PackageName: "models",
 		OutputDir:   tempDir,
 		Verbose:     false,
 	}
 
 	t.Run("Input Only", func(t *testing.T) {
-		err := generator.ProcessFile("test_data/input_only.prompt")
+		err := generator.ProcessFile(gen, "testdata/input_only.prompt")
 		if err != nil {
 			t.Fatalf("Failed to process input-only prompt: %v", err)
 		}
@@ -576,7 +580,7 @@ func TestEdgeCases(t *testing.T) {
 	})
 
 	t.Run("Output Only", func(t *testing.T) {
-		err := generator.ProcessFile("test_data/output_only.prompt")
+		err := generator.ProcessFile(gen, "testdata/output_only.prompt")
 		if err != nil {
 			t.Fatalf("Failed to process output-only prompt: %v", err)
 		}
@@ -597,7 +601,7 @@ func TestEdgeCases(t *testing.T) {
 	})
 
 	t.Run("No Schema", func(t *testing.T) {
-		err := generator.ProcessFile("test_data/no_schema.prompt")
+		err := generator.ProcessFile(gen, "testdata/no_schema.prompt")
 		// Should not error but should skip generation
 		if err != nil {
 			t.Fatalf("Failed to process no-schema prompt: %v", err)
@@ -615,13 +619,13 @@ func TestEdgeCases(t *testing.T) {
 // TestComplexEnums tests complex enum handling with special characters
 func TestComplexEnums(t *testing.T) {
 	tempDir := t.TempDir()
-	generator := Generator{
+	gen := model.Generator{
 		PackageName: "models",
 		OutputDir:   tempDir,
 		Verbose:     false,
 	}
 
-	err := generator.ProcessFile("test_data/complex_enums.prompt")
+	err := generator.ProcessFile(gen, "testdata/complex_enums.prompt")
 	if err != nil {
 		t.Fatalf("Failed to process complex enums prompt: %v", err)
 	}
@@ -671,9 +675,9 @@ func TestNamingConventions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := snakeToPascalCase(test.input)
+		result := generator.SnakeToPascalCase(test.input)
 		if result != test.expected {
-			t.Errorf("snakeToPascalCase(%q) = %q, want %q",
+			t.Errorf("SnakeToPascalCase(%q) = %q, want %q",
 				test.input, result, test.expected)
 		}
 	}
@@ -687,7 +691,7 @@ func TestSchemaFormatDetection(t *testing.T) {
 		"age":  "integer, user age",
 	}
 
-	if !isPicoschema(picoSchema) {
+	if !schema.IsPicoschema(picoSchema) {
 		t.Error("Failed to detect Picoschema format")
 	}
 
@@ -701,11 +705,99 @@ func TestSchemaFormatDetection(t *testing.T) {
 		},
 	}
 
-	if !isJSONSchema(jsonSchema) {
+	if !schema.IsJSONSchema(jsonSchema) {
 		t.Error("Failed to detect JSON Schema format")
 	}
 
-	if isPicoschema(jsonSchema) {
+	if schema.IsPicoschema(jsonSchema) {
 		t.Error("Incorrectly detected JSON Schema as Picoschema")
+	}
+}
+
+// TestFieldOrderingConsistency tests that fields are generated in consistent order
+func TestFieldOrderingConsistency(t *testing.T) {
+	// Test Picoschema field ordering
+	picoschema := map[string]any{
+		"zebra_field":  "string, last field alphabetically",
+		"alpha_field":  "string, first field alphabetically",
+		"middle_field": "string, middle field alphabetically",
+		"beta_field":   "string, second field alphabetically",
+	}
+
+	// Generate fields multiple times to ensure consistent ordering
+	var fieldOrders [][]string
+	for i := 0; i < 5; i++ {
+		fields, _, err := schema.ParseSchema(picoschema, []string{})
+		if err != nil {
+			t.Fatalf("Failed to parse picoschema: %v", err)
+		}
+
+		var fieldNames []string
+		for _, field := range fields {
+			fieldNames = append(fieldNames, field.Name)
+		}
+		fieldOrders = append(fieldOrders, fieldNames)
+	}
+
+	// All field orders should be identical
+	expectedOrder := []string{"AlphaField", "BetaField", "MiddleField", "ZebraField"}
+	for i, fieldOrder := range fieldOrders {
+		if len(fieldOrder) != len(expectedOrder) {
+			t.Errorf("Run %d: expected %d fields, got %d", i+1, len(expectedOrder), len(fieldOrder))
+			continue
+		}
+		for j, expectedName := range expectedOrder {
+			if fieldOrder[j] != expectedName {
+				t.Errorf("Run %d: expected field %d to be %s, got %s", i+1, j, expectedName, fieldOrder[j])
+			}
+		}
+	}
+
+	// Test JSON Schema field ordering
+	jsonSchema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"zebra_prop": map[string]any{
+				"type":        "string",
+				"description": "Last field alphabetically",
+			},
+			"alpha_prop": map[string]any{
+				"type":        "string",
+				"description": "First field alphabetically",
+			},
+			"middle_prop": map[string]any{
+				"type":        "string",
+				"description": "Middle field alphabetically",
+			},
+		},
+	}
+
+	// Generate fields multiple times to ensure consistent ordering
+	var jsonFieldOrders [][]string
+	for i := 0; i < 5; i++ {
+		fields, _, _, err := schema.ParseSchemaWithStructs(jsonSchema, []string{})
+		if err != nil {
+			t.Fatalf("Failed to parse JSON schema: %v", err)
+		}
+
+		var fieldNames []string
+		for _, field := range fields {
+			fieldNames = append(fieldNames, field.Name)
+		}
+		jsonFieldOrders = append(jsonFieldOrders, fieldNames)
+	}
+
+	// All field orders should be identical
+	expectedJSONOrder := []string{"AlphaProp", "MiddleProp", "ZebraProp"}
+	for i, fieldOrder := range jsonFieldOrders {
+		if len(fieldOrder) != len(expectedJSONOrder) {
+			t.Errorf("JSON Run %d: expected %d fields, got %d", i+1, len(expectedJSONOrder), len(fieldOrder))
+			continue
+		}
+		for j, expectedName := range expectedJSONOrder {
+			if fieldOrder[j] != expectedName {
+				t.Errorf("JSON Run %d: expected field %d to be %s, got %s", i+1, j, expectedName, fieldOrder[j])
+			}
+		}
 	}
 }

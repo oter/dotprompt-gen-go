@@ -1,0 +1,59 @@
+---
+description: Clean Architecture & Project Structure
+globs: 
+alwaysApply: true
+---
+
+# Project Architecture & Structure
+
+## Project Layout
+```
+dotprompt-gen-go/
+├── cmd/dotprompt-gen/       # Entry point & CLI (main.go)
+├── internal/                 # Private application code
+│   ├── generator/            # Code generation logic
+│   ├── parser/               # Prompt file parsing
+│   └── schema/               # Schema handling and validation
+├── pkg/                      # Public reusable packages
+│   └── types/                # Common type definitions
+├── examples/                 # Example prompt files and usage
+│   ├── basic/                # Basic examples
+│   └── advanced/             # Advanced examples
+├── test_data/                # Test prompt files
+├── docs/                     # Documentation
+├── scripts/                  # Build and utility scripts
+├── Taskfile.yml              # Task runner
+├── go.mod                    # Go module definition
+├── go.sum                    # Go module checksums
+├── README.md                 # Project overview and usage
+└── LICENSE                   # Project license
+```
+
+## Architecture Principles
+- **Simple and focused**: Single responsibility - generate Go code from prompt files
+- **Modular design**: Separate concerns into distinct packages
+- **Testable**: Each component can be tested independently
+- **Extensible**: Easy to add new output formats or schema types
+
+## Package Responsibilities
+- **`cmd/dotprompt-gen`**: CLI interface, flag parsing, main application flow
+- **`internal/generator`**: Core code generation logic, template handling
+- **`internal/parser`**: Parse .prompt files, extract YAML schemas
+- **`internal/schema`**: Schema validation, type mapping, Go type generation
+- **`pkg/types`**: Public interfaces and types for external use
+
+## Code Generation Flow
+1. **Parse Input**: Read .prompt file and extract YAML frontmatter
+2. **Validate Schema**: Parse and validate JSON schema definitions
+3. **Generate Types**: Convert schema types to Go structs
+4. **Apply Templates**: Use Go templates to generate final code
+5. **Write Output**: Write generated Go files to specified location
+
+## Key Principles
+- No circular dependencies
+- Test files mirror source structure
+- Use mocks/fakes for external dependencies where practical
+- Keep functions small, cohesive, and with explicit error handling
+- **Generated code MUST be committed** - it's part of the source tree
+- Follow Go tool conventions and patterns
+- No circular dependencies
