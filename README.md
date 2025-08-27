@@ -16,7 +16,8 @@ This tool parses `.prompt` files (used for AI prompt engineering) and generates 
 Install globally for immediate use:
 
 ```bash
-go install github.com/oter/dotprompt-gen-go@latest
+go install github.com/oter/dotprompt-gen-go/cmd/dotprompt-gen-go@latest
+
 dotprompt-gen-go -file myfile.prompt
 ```
 
@@ -26,7 +27,7 @@ Add as a project tool for version-locked, reproducible builds:
 
 ```bash
 # Add tool to your project
-go get -tool github.com/oter/dotprompt-gen-go@latest
+go get -tool github.com/oter/dotprompt-gen-go/cmd/dotprompt-gen-go@latest
 
 # Use the tool  
 go tool dotprompt-gen-go -file myfile.prompt
@@ -44,7 +45,7 @@ tool github.com/oter/dotprompt-gen-go
 Run without installation:
 
 ```bash
-go run github.com/oter/dotprompt-gen-go@latest [flags]
+go run github.com/oter/dotprompt-gen-go/cmd/dotprompt-gen-go@latest [flags]
 ```
 
 ## Quick Start
@@ -308,7 +309,7 @@ go generate ./...
 
 ## Examples
 
-See the `test_data/` directory for comprehensive examples including:
+See the `internal/testdata/` directory for comprehensive examples including:
 - Basic JSON Schema types
 - Complex nested objects  
 - Array handling

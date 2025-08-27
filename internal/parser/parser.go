@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"fmt"
@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/oter/dotprompt-gen-go/internal/model"
 )
 
 // ParsePromptFile parses a dotprompt file and returns a PromptFile
-func ParsePromptFile(filePath string) (*PromptFile, error) {
+func ParsePromptFile(filePath string) (*model.PromptFile, error) {
 	// Validate and clean the file path to prevent path traversal attacks
 	cleanPath := filepath.Clean(filePath)
 
@@ -44,7 +46,7 @@ func ParsePromptFile(filePath string) (*PromptFile, error) {
 }
 
 // ParsePromptContent parses dotprompt content and returns a PromptFile
-func ParsePromptContent(content, filename string) (*PromptFile, error) {
+func ParsePromptContent(content, filename string) (*model.PromptFile, error) {
 	// Split by frontmatter delimiters
 	parts := strings.Split(content, "---")
 	if len(parts) < 3 {
@@ -53,7 +55,7 @@ func ParsePromptContent(content, filename string) (*PromptFile, error) {
 
 	// Parse YAML frontmatter
 	frontmatterContent := strings.TrimSpace(parts[1])
-	var frontmatter FrontmatterData
+	var frontmatter model.FrontmatterData
 	if err := yaml.Unmarshal([]byte(frontmatterContent), &frontmatter); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML frontmatter: %w", err)
 	}
@@ -62,7 +64,7 @@ func ParsePromptContent(content, filename string) (*PromptFile, error) {
 	templateParts := parts[2:]
 	template := strings.TrimSpace(strings.Join(templateParts, "---"))
 
-	return &PromptFile{
+	return &model.PromptFile{
 		Frontmatter: frontmatter,
 		Template:    template,
 		Filename:    filename,
@@ -70,22 +72,22 @@ func ParsePromptContent(content, filename string) (*PromptFile, error) {
 }
 
 // HasSchema checks if the prompt file has input or output schema
-func (pf *PromptFile) HasSchema() bool {
+func HasSchema(pf *model.PromptFile) bool {
 	return pf.Frontmatter.Input.Schema != nil || pf.Frontmatter.Output.Schema != nil
 }
 
 // GetInputSchema returns the input schema if available
-func (pf *PromptFile) GetInputSchema() any {
+func GetInputSchema(pf *model.PromptFile) any {
 	return pf.Frontmatter.Input.Schema
 }
 
 // GetOutputSchema returns the output schema if available
-func (pf *PromptFile) GetOutputSchema() any {
+func GetOutputSchema(pf *model.PromptFile) any {
 	return pf.Frontmatter.Output.Schema
 }
 
 // GetRequiredInputFields returns required input fields
-func (pf *PromptFile) GetRequiredInputFields() []string {
+func GetRequiredInputFields(pf *model.PromptFile) []string {
 	// Check if schema has required fields
 	if schema, ok := pf.Frontmatter.Input.Schema.(map[string]any); ok {
 		if required, ok := schema["required"].([]any); ok {
@@ -104,7 +106,7 @@ func (pf *PromptFile) GetRequiredInputFields() []string {
 }
 
 // GetRequiredOutputFields returns required output fields
-func (pf *PromptFile) GetRequiredOutputFields() []string {
+func GetRequiredOutputFields(pf *model.PromptFile) []string {
 	// Check if schema has required fields
 	if schema, ok := pf.Frontmatter.Output.Schema.(map[string]any); ok {
 		if required, ok := schema["required"].([]any); ok {

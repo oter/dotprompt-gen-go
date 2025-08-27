@@ -1,0 +1,40 @@
+---
+description: Mandatory Technology Stack
+globs:
+alwaysApply: false
+---
+
+# Mandatory Technology Stack
+
+## Core Technologies
+- **Language**: Go 1.24+
+- **Application Type**: CLI tool for code generation
+- **Input Format**: .prompt files with YAML frontmatter
+- **Output Format**: Go source code files
+
+## Libraries & Frameworks
+- **YAML Parsing**: `gopkg.in/yaml.v3` for parsing prompt file schemas
+- **Standard Library**: Extensive use of Go standard library packages
+- **CLI**: Standard Go `flag` package for command-line interface
+- **File I/O**: Standard Go `os` and `io` packages
+- **Text Processing**: Standard Go `text/template` for code generation
+
+## Development Tools
+- **Task Runner**: `Taskfile.yml` for build and development tasks
+- **Linting**: golangci-lint (recommended)
+- **Testing**: Standard Go testing package
+- **Code Generation**: Custom templates for Go code generation
+- **Code Formatting**: `go fmt` and `goimports`
+
+## Project Structure
+- **Module**: `github.com/oter/dotprompt-gen-go`
+- **Packages**: Internal packages for generator, parser, and schema
+- **Examples**: Comprehensive examples in `examples/` directory
+- **Test Data**: Rich test data in `test_data/` directory
+
+## Rules
+- No technology changes without justification and updates to docs
+- Lock dependency versions in `go.mod`
+- All updates must pass tests
+- Keep dependencies minimal - prefer standard library
+- Generated code must be committed to version control

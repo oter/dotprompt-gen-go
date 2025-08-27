@@ -3,7 +3,7 @@ version: "3"
 vars:
   BINARY_NAME: dotprompt-gen-go
   BUILD_DIR: .bin
-  MAIN_PACKAGE: .
+  MAIN_PACKAGE: ./cmd/dotprompt-gen-go
 
 tasks:
   default:

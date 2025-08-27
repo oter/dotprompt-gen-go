@@ -1,9 +1,12 @@
-package main
+package schema
 
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
+
+	"github.com/oter/dotprompt-gen-go/internal/model"
 )
 
 // Type mapping from schema types to Go types
@@ -26,7 +29,7 @@ var jsonSchemaToGoType = map[string]string{
 }
 
 // ParseSchema parses a schema and returns Go fields and enums (legacy function)
-func ParseSchema(schema any, requiredFields []string) ([]GoField, []GoEnum, error) {
+func ParseSchema(schema any, requiredFields []string) ([]model.GoField, []model.GoEnum, error) {
 	fields, enums, _, err := ParseSchemaWithStructs(schema, requiredFields)
 	return fields, enums, err
 }
@@ -35,24 +38,24 @@ func ParseSchema(schema any, requiredFields []string) ([]GoField, []GoEnum, erro
 func ParseSchemaWithStructs(
 	schema any,
 	requiredFields []string,
-) ([]GoField, []GoEnum, []GoStruct, error) {
+) ([]model.GoField, []model.GoEnum, []model.GoStruct, error) {
 	if schema == nil {
 		return nil, nil, nil, nil
 	}
 
 	// Try to detect schema format and parse accordingly
-	if isPicoschema(schema) {
+	if IsPicoschema(schema) {
 		fields, enums, err := parsePicoschema(schema, requiredFields)
 		return fields, enums, nil, err // Picoschema doesn't support nested structs yet
-	} else if isJSONSchema(schema) {
+	} else if IsJSONSchema(schema) {
 		return parseJSONSchemaWithStructs(schema, requiredFields)
 	}
 
 	return nil, nil, nil, fmt.Errorf("unsupported schema format")
 }
 
-// isPicoschema detects if schema is in Picoschema format
-func isPicoschema(schema any) bool {
+// IsPicoschema detects if schema is in Picoschema format
+func IsPicoschema(schema any) bool {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
 		return false
@@ -66,8 +69,8 @@ func isPicoschema(schema any) bool {
 	return !hasType && !hasProperties
 }
 
-// isJSONSchema detects if schema is in JSON Schema format
-func isJSONSchema(schema any) bool {
+// IsJSONSchema detects if schema is in JSON Schema format
+func IsJSONSchema(schema any) bool {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
 		return false
@@ -81,21 +84,30 @@ func isJSONSchema(schema any) bool {
 }
 
 // parsePicoschema parses Picoschema format
-func parsePicoschema(schema any, requiredFields []string) ([]GoField, []GoEnum, error) {
+func parsePicoschema(schema any, requiredFields []string) ([]model.GoField, []model.GoEnum, error) {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
 		return nil, nil, fmt.Errorf("schema must be an object")
 	}
 
-	var fields []GoField
-	var enums []GoEnum
+	var fields []model.GoField
+	var enums []model.GoEnum
 	requiredSet := make(map[string]bool)
 
 	for _, field := range requiredFields {
 		requiredSet[field] = true
 	}
 
-	for fieldName, fieldDef := range schemaMap {
+	// Collect field names and sort them to ensure consistent ordering
+	var fieldNames []string
+	for fieldName := range schemaMap {
+		fieldNames = append(fieldNames, fieldName)
+	}
+	sort.Strings(fieldNames)
+
+	// Process fields in sorted order
+	for _, fieldName := range fieldNames {
+		fieldDef := schemaMap[fieldName]
 		field, enumDef, err := parsePicoschemaField(fieldName, fieldDef, requiredSet[fieldName])
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse field %s: %w", fieldName, err)
@@ -114,15 +126,15 @@ func parsePicoschema(schema any, requiredFields []string) ([]GoField, []GoEnum, 
 func parseJSONSchemaWithStructs(
 	schema any,
 	requiredFields []string,
-) ([]GoField, []GoEnum, []GoStruct, error) {
+) ([]model.GoField, []model.GoEnum, []model.GoStruct, error) {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
 		return nil, nil, nil, fmt.Errorf("schema must be an object")
 	}
 
-	var fields []GoField
-	var enums []GoEnum
-	var allStructs []GoStruct
+	var fields []model.GoField
+	var enums []model.GoEnum
+	var allStructs []model.GoStruct
 	requiredSet := make(map[string]bool)
 
 	for _, field := range requiredFields {
@@ -135,7 +147,16 @@ func parseJSONSchemaWithStructs(
 		return nil, nil, nil, fmt.Errorf("JSON schema must have properties")
 	}
 
-	for fieldName, fieldDef := range properties {
+	// Collect field names and sort them to ensure consistent ordering
+	var fieldNames []string
+	for fieldName := range properties {
+		fieldNames = append(fieldNames, fieldName)
+	}
+	sort.Strings(fieldNames)
+
+	// Process fields in sorted order
+	for _, fieldName := range fieldNames {
+		fieldDef := properties[fieldName]
 		field, allFieldEnums, directStruct, deeplyNestedStructs, err := parseJSONSchemaFieldWithNestedRecursive(
 			fieldName,
 			fieldDef,
@@ -180,14 +201,14 @@ func parsePicoschemaField(
 	fieldName string,
 	fieldDef any,
 	isRequired bool,
-) (GoField, *GoEnum, error) {
+) (model.GoField, *model.GoEnum, error) {
 	fieldStr, ok := fieldDef.(string)
 	if !ok {
-		return GoField{}, nil, fmt.Errorf("picoschema field must be a string")
+		return model.GoField{}, nil, fmt.Errorf("picoschema field must be a string")
 	}
 
 	// Parse field definition: "type, description" or "type(enum): [values], description"
-	field := GoField{
+	field := model.GoField{
 		Name:    schemaFieldToGoField(fieldName),
 		JSONTag: fieldName,
 	}
@@ -271,13 +292,13 @@ func parseJSONSchemaFieldWithNestedRecursive(
 	fieldDef any,
 	isRequired bool,
 	parentStructName string,
-) (GoField, []GoEnum, *GoStruct, []GoStruct, error) {
+) (model.GoField, []model.GoEnum, *model.GoStruct, []model.GoStruct, error) {
 	fieldDefMap, ok := fieldDef.(map[string]any)
 	if !ok {
-		return GoField{}, nil, nil, nil, fmt.Errorf("JSON schema field must be an object")
+		return model.GoField{}, nil, nil, nil, fmt.Errorf("JSON schema field must be an object")
 	}
 
-	field := GoField{
+	field := model.GoField{
 		Name:    schemaFieldToGoField(fieldName),
 		JSONTag: fieldName,
 	}
@@ -304,7 +325,7 @@ func parseJSONSchemaFieldWithNestedRecursive(
 		if err != nil {
 			return field, nil, nil, nil, err
 		}
-		return field, []GoEnum{*enumDef}, nil, nil, nil
+		return field, []model.GoEnum{*enumDef}, nil, nil, nil
 	}
 
 	// Check for array
@@ -331,9 +352,9 @@ func parseJSONSchemaFieldWithNestedRecursive(
 // Returns the field, any enums (including nested), the main struct, deeply nested structs, and all
 // deeply nested enums
 func parseJSONSchemaObjectField(
-	field GoField,
+	field model.GoField,
 	fieldDefMap map[string]any,
-) (GoField, []GoEnum, *GoStruct, []GoStruct, error) {
+) (model.GoField, []model.GoEnum, *model.GoStruct, []model.GoStruct, error) {
 	// Create struct name from field name
 	structName := field.Name
 
@@ -356,15 +377,24 @@ func parseJSONSchemaObjectField(
 	}
 
 	// Parse nested properties and collect all deeply nested structs and enums
-	var nestedFields []GoField
-	var allEnums []GoEnum
-	var allDeeplyNestedStructs []GoStruct
+	var nestedFields []model.GoField
+	var allEnums []model.GoEnum
+	var allDeeplyNestedStructs []model.GoStruct
 	requiredSet := make(map[string]bool)
 	for _, reqField := range requiredFields {
 		requiredSet[reqField] = true
 	}
 
-	for propName, propDef := range properties {
+	// Collect property names and sort them to ensure consistent ordering
+	var propNames []string
+	for propName := range properties {
+		propNames = append(propNames, propName)
+	}
+	sort.Strings(propNames)
+
+	// Process nested properties in sorted order
+	for _, propName := range propNames {
+		propDef := properties[propName]
 		nestedField, allNestedEnums, directNestedStruct, deeplyNestedStructs, err := parseJSONSchemaFieldWithNestedRecursive(
 			propName,
 			propDef,
@@ -396,7 +426,7 @@ func parseJSONSchemaObjectField(
 	}
 
 	// Create the nested struct
-	nestedStruct := &GoStruct{
+	nestedStruct := &model.GoStruct{
 		Name:     structName,
 		Fields:   nestedFields,
 		Comments: []string{fmt.Sprintf("%s represents %s", structName, field.Comment)},
@@ -409,7 +439,10 @@ func parseJSONSchemaObjectField(
 }
 
 // parsePicoschemaEnum parses enum definition in Picoschema
-func parsePicoschemaEnum(field GoField, typeDescPart string) (GoField, *GoEnum, error) {
+func parsePicoschemaEnum(
+	field model.GoField,
+	typeDescPart string,
+) (model.GoField, *model.GoEnum, error) {
 	// Extract enum values from: "string(enum): [value1, value2], description"
 	re := regexp.MustCompile(`(\w+)\(enum[^)]*\):\s*\[([^\]]+)\]`)
 	matches := re.FindStringSubmatch(typeDescPart)
@@ -422,14 +455,14 @@ func parsePicoschemaEnum(field GoField, typeDescPart string) (GoField, *GoEnum, 
 
 	// Parse enum values
 	valueStrs := strings.Split(valuesStr, ",")
-	var enumValues []EnumValue
+	var enumValues []model.EnumValue
 
 	enumTypeName := field.Name + "Enum"
 
 	for _, valueStr := range valueStrs {
 		value := strings.TrimSpace(valueStr)
 		constName := enumValueToConstName(enumTypeName, value)
-		enumValues = append(enumValues, EnumValue{
+		enumValues = append(enumValues, model.EnumValue{
 			ConstName: constName,
 			Value:     value,
 		})
@@ -438,7 +471,7 @@ func parsePicoschemaEnum(field GoField, typeDescPart string) (GoField, *GoEnum, 
 	field.GoType = enumTypeName
 	field.IsEnum = true
 
-	enum := &GoEnum{
+	enum := &model.GoEnum{
 		Name:    enumTypeName,
 		Type:    mapPicoschemaType(baseType),
 		Values:  enumValues,
@@ -450,22 +483,22 @@ func parsePicoschemaEnum(field GoField, typeDescPart string) (GoField, *GoEnum, 
 
 // parseJSONSchemaEnum parses enum definition in JSON Schema
 func parseJSONSchemaEnum(
-	field GoField,
+	field model.GoField,
 	_ string,
 	enumValues any,
-) (GoField, *GoEnum, error) {
+) (model.GoField, *model.GoEnum, error) {
 	enumSlice, ok := enumValues.([]any)
 	if !ok {
 		return field, nil, fmt.Errorf("enum values must be an array")
 	}
 
-	var values []EnumValue
+	var values []model.EnumValue
 	enumTypeName := field.Name + "Enum"
 
 	for _, val := range enumSlice {
 		valueStr := fmt.Sprintf("%v", val)
 		constName := enumValueToConstName(enumTypeName, valueStr)
-		values = append(values, EnumValue{
+		values = append(values, model.EnumValue{
 			ConstName: constName,
 			Value:     valueStr,
 		})
@@ -474,7 +507,7 @@ func parseJSONSchemaEnum(
 	field.GoType = enumTypeName
 	field.IsEnum = true
 
-	enum := &GoEnum{
+	enum := &model.GoEnum{
 		Name:    enumTypeName,
 		Type:    "string", // All enums are string-based in Go for JSON compatibility
 		Values:  values,
@@ -486,10 +519,10 @@ func parseJSONSchemaEnum(
 
 // parsePicoschemaArray parses array definition in Picoschema
 func parsePicoschemaArray(
-	field GoField,
+	field model.GoField,
 	_ string,
 	parts []string,
-) (GoField, *GoEnum, error) {
+) (model.GoField, *model.GoEnum, error) {
 	// The typeDescPart is already the element type (e.g., "string")
 	// parts[0] contains the element type and parts[1+] contain the description
 	if len(parts) < 1 {
@@ -503,7 +536,7 @@ func parsePicoschemaArray(
 }
 
 // parseJSONSchemaArray parses array definition in JSON Schema
-func parseJSONSchemaArray(field GoField, fieldDefMap map[string]any) GoField {
+func parseJSONSchemaArray(field model.GoField, fieldDefMap map[string]any) model.GoField {
 	items, ok := fieldDefMap["items"]
 	if !ok {
 		field.GoType = "[]any"
@@ -540,4 +573,38 @@ func mapJSONSchemaType(schemaType string) string {
 		return goType
 	}
 	return "any" // Fallback
+}
+
+// schemaFieldToGoField converts a schema field name to a Go field name
+func schemaFieldToGoField(fieldName string) string {
+	return snakeToPascalCase(fieldName)
+}
+
+// snakeToPascalCase converts snake_case to PascalCase
+func snakeToPascalCase(s string) string {
+	if s == "" {
+		return s
+	}
+
+	parts := strings.Split(s, "_")
+	var result strings.Builder
+
+	for _, part := range parts {
+		if len(part) > 0 {
+			result.WriteString(strings.ToUpper(part[:1]))
+			if len(part) > 1 {
+				result.WriteString(part[1:])
+			}
+		}
+	}
+
+	return result.String()
+}
+
+// enumValueToConstName converts an enum value to a Go constant name
+func enumValueToConstName(enumTypeName, enumValue string) string {
+	// Convert enum value to PascalCase and prefix with type name
+	cleanValue := strings.ReplaceAll(enumValue, "-", "_")
+	pascalValue := snakeToPascalCase(cleanValue)
+	return enumTypeName + pascalValue
 }
