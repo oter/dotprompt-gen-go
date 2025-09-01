@@ -309,7 +309,7 @@ go generate ./...
 
 ## Examples
 
-See the `internal/test_prompts/` directory for comprehensive examples including:
+See the `internal/integration_tests/prompts/` directory for comprehensive examples including:
 - Basic JSON Schema types
 - Complex nested objects  
 - Array handling
