@@ -1,0 +1,68 @@
+---
+description: Development Workflow & Task Management
+globs: 
+alwaysApply: true
+---
+
+# Development Workflow & Task Management
+
+## Systematic Approach
+**Analyze → Plan → Implement → Test → Iterate**
+
+## 1. Analysis Phase (BEFORE coding)
+- **ALWAYS start by reading `MISTAKES.md`** - Contains user feedback and decisions. Never repeat rejected approaches.
+- **Read `PLAN.md`** - Current tasks and priorities
+- Examine existing codebase structure and patterns
+- Identify affected components and dependencies
+- Check current configuration and setup
+- Review test data and examples
+
+## 2. Planning Phase
+- Ask clarifying questions - don't assume requirements
+- Break work into small, testable tasks
+- Document technical approach
+- **FEATURE REQUESTS**: When user requests a feature - plan completely but DO NOT implement until explicitly approved
+- Get alignment before implementation
+- **Update task status** - Mark as in-progress when starting
+
+## 3. Implementation Phase
+- **One task at a time** - complete before moving to next
+- Follow existing patterns and conventions
+- Write tests alongside code
+- Handle errors properly with context
+- Use descriptive names (no generic names like `data`, `temp`)
+- **ALWAYS use Taskfile.yaml for build/generate commands**
+- Reuse existing business logic functions (export if needed)
+- Create shared test utilities for common infrastructure
+- Proactively suggest helper functions to reduce duplication
+
+## 4. Quality Checks
+- All tests passing
+- No regressions introduced
+- Documentation updated
+- Code generation works correctly
+- Security considerations addressed
+- Meet all acceptance criteria before marking complete
+
+## 5. Documentation & Tracking
+- **Update both documents**: Track progress in `PROGRESS.md` and log mistakes in `MISTAKES.md`
+- Document technical decisions and successes in PROGRESS.md
+- Document mistakes and prevention strategies in MISTAKES.md
+- After every significant action, follow this sequence:
+  - Analyze Actions: Review completed actions and outcomes
+  - Identify Mistakes: Critically assess errors or suboptimal approaches
+  - Update Mistakes Log: Add entries with root cause and prevention strategy
+  - Update Progress: Document status and technical decisions
+  - Await Next Instruction: Confirm completion and wait for directive
+
+## Anti-patterns to Avoid
+❌ Starting without understanding existing code
+❌ Breaking established patterns
+❌ Big bang implementation (do incremental)
+❌ No tests
+❌ Circular dependencies
+❌ God functions/packages
+❌ Not using Taskfile.yaml for build commands
+❌ Duplicating test infrastructure instead of shared utilities
+❌ Duplicating business logic in tests
+❌ Not verifying mock call counts in tests

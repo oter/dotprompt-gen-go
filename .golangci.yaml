@@ -10,39 +10,33 @@ issues:
   new: false # show all issues, not just new ones
 
 linters:
-  default: none
-  enable:
-    - tagliatelle
-    - asciicheck
-    - bodyclose
-    - depguard
-    - dogsled
-    - errcheck
-    - funlen
-    - gochecknoinits
-    - gocognit
-    - gocritic
-    - gocyclo
-    - goprintffuncname
-    - gosec
-    - govet
-    - ineffassign
-    - lll
-    - makezero
-    - misspell
-    - nakedret
-    - nestif
-    - noctx
-    - nolintlint
-    - revive
-    - rowserrcheck
-    - sqlclosecheck
-    - staticcheck
-    - unconvert
-    - unparam
-    - unused
-    - whitespace
+  default: all
+  disable:
+    - wsl
+    - wsl_v5
+    - err113
+    - prealloc
+    - noinlineerr
+    - exhaustruct
   settings:
+    goconst:
+      min-occurrences: 4
+      match-constant: true
+    varnamelen:
+      ignore-names:
+        - err
+        - ok
+        - i
+        - j
+        - g # generator parameter
+        - id
+    mnd:
+      ignored-functions:
+        - "strings.SplitN"
+        - "os.WriteFile"
+    forbidigo:
+      forbid:
+        - pattern: "^(print|println)$"
     tagliatelle:
       case:
         rules:
@@ -69,6 +63,9 @@ linters:
     funlen:
       lines: 320
       statements: 120
+    cyclop:
+      max-complexity: 15
+      package-average: 0
     gocognit:
       min-complexity: 110
     gocyclo:
@@ -108,12 +105,7 @@ linters:
           - lll
         source: "^//go:generate "
     paths:
-      - api
-      - ent
-      - tools
-      - third_party$
-      - builtin$
-      - examples$
+      - integration_tests/
 formatters:
   enable:
     - gci
@@ -131,20 +123,16 @@ formatters:
       module-path: github.com/oter/dotprompt-gen-go
       extra-rules: true
     gofmt:
+      simplify: true
       rewrite-rules:
         - pattern: "interface{}"
           replacement: "any"
+        - pattern: "a[b:len(a)]"
+          replacement: "a[b:]"
     goimports:
       local-prefixes:
         - github.com/oter/dotprompt-gen-go
     golines:
-      shorten-comments: true
+      max-len: 200
   exclusions:
     generated: lax
-    paths:
-      - api
-      - ent
-      - tools
-      - third_party$
-      - builtin$
-      - examples$

@@ -1,9 +1,22 @@
+// Package main implements dotprompt-gen, a code generation tool that creates
+// Go request and response models from .prompt files in dotprompt format.
+//
+// The tool supports both Picoschema and JSON Schema formats and can be used
+// to generate type-safe Go structs from prompt definitions.
+//
+// Usage:
+//
+//	dotprompt-gen -file path/to/prompt.prompt
+//	dotprompt-gen -dir path/to/prompts/ -pkg models -out ./generated/
 package main
 
 import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/oter/dotprompt-gen-go/internal/codegen"
+	"github.com/oter/dotprompt-gen-go/internal/generator"
 )
 
 func main() {
@@ -39,6 +52,7 @@ func main() {
 
 	if *help {
 		flag.Usage()
+
 		return
 	}
 
@@ -54,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	generator := Generator{
+	gen := codegen.Generator{
 		PackageName: *outputPkg,
 		OutputDir:   *outputDir,
 		Verbose:     *verbose,
@@ -62,9 +76,9 @@ func main() {
 
 	var err error
 	if *inputFile != "" {
-		err = generator.ProcessFile(*inputFile)
+		err = generator.ProcessFile(gen, *inputFile)
 	} else {
-		err = generator.ProcessDirectory(*inputDir)
+		err = generator.ProcessDirectory(gen, *inputDir)
 	}
 
 	if err != nil {

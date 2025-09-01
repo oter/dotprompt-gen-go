@@ -1,9 +1,12 @@
 version: "3"
 
+silent: false
+
 vars:
   BINARY_NAME: dotprompt-gen-go
   BUILD_DIR: .bin
-  MAIN_PACKAGE: .
+  MAIN_PACKAGE: ./cmd/dotprompt-gen-go
+  VERSION_PKG: github.com/oter/dotprompt-gen-go/internal/generator
 
 tasks:
   default:
@@ -11,11 +14,48 @@ tasks:
     cmds:
       - task --list
 
+  version:
+    desc: Show the version that will be used for builds
+    vars:
+      VERSION:
+        sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+    cmds:
+      - echo "Version {{.VERSION}}"
+
+  modernize:
+    desc: Modernize the codebase
+    cmds:
+      - go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -fix -test ./...
+      - go run golang.org/x/tools/gopls/internal/analysis/simplifyrange/cmd/simplifyrange@latest -fix -test ./...
+
+  generate:
+    desc: Generate code from prompt files
+    cmds:
+      - go generate ./...
+
   build:
     desc: Build the binary
+    deps:
+      - generate
+    vars:
+      VERSION:
+        sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_PACKAGE}}
+      - go build -ldflags "-X {{.VERSION_PKG}}.Version={{.VERSION}}" -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_PACKAGE}}
+      - echo "Built {{.BINARY_NAME}} version {{.VERSION}}"
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+
+  build-release:
+    desc: Build release binary with optimizations
+    vars:
+      VERSION:
+        sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -ldflags "-s -w -X {{.VERSION_PKG}}.Version={{.VERSION}}" -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_PACKAGE}}
+      - echo "Built release {{.BINARY_NAME}} version {{.VERSION}}"
     generates:
       - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
 

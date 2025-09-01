@@ -1,0 +1,65 @@
+---
+description: Go Coding Standards
+globs: 
+alwaysApply: true
+---
+
+# Go Coding Standards
+
+## Philosophy
+- _Be_ the maintainer
+- **Always code as if the person who ends up maintaining your code is a violent psychopath who knows where you live.** 
+- Always code and comment in such a way that if someone a few notches junior picks up the code, they will take pleasure in reading and learning from it.
+- **ALL code elements must be in English**: variables, functions, types, packages, files, directories, comments, documentation, error messages, logs, commit messages, and configuration.
+
+## Naming Conventions
+- **Variables/Functions**: camelCase (private), PascalCase (exported)
+- **Functions**: Use verbs (`generateCode`, not `codeData`)
+- **Interfaces**: Describe capability (`CodeGenerator`, `PromptParser`)
+- **No generic names**: Avoid `x`, `data`, `temp`, `result`, `Gen`, `Mgr`
+
+## Code Quality
+- **Functions**: < 30 lines, single responsibility
+- **DRY**: Extract common logic into reusable functions
+- **Pure functions**: Prefer no side effects
+- **Validation**: Fail fast with clear messages
+- **Go Format**: Align struct fields, consistent spacing
+
+## Error Handling
+```go
+// Wrap errors with context
+if err != nil {
+    return fmt.Errorf("failed to parse prompt file: %w", err)
+}
+```
+
+## Testing
+- Test behavior, not implementation
+- Arrange-Act-Assert pattern
+- Test edge cases and error conditions
+- Aim for 80%+ coverage
+- Unit + Integration tests required
+- Mocks: Verify both arguments AND call counts
+- Test Infrastructure: Share utilities via test_utils.go
+
+## Security
+- Validate ALL inputs
+- Sanitize file paths and content
+- Keep dependencies updated
+
+## Package Organization
+- Single responsibility per package
+- Define interfaces at point of use
+- Group imports: stdlib, third-party, internal
+- Files < 500 lines
+
+## Performance
+- Profile before optimizing
+- Batch operations when possible
+- Reuse objects to reduce allocations
+
+## Documentation
+- Code should be self-documenting
+- Comments explain WHY, not WHAT
+- Document exported functions/types
+- Include examples in README

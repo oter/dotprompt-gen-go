@@ -1,0 +1,58 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    type: object
+    properties:
+      priority:
+        type: string
+        enum: [low, medium, high]
+        description: Task priority level
+      status:
+        type: string
+        enum: [pending, approved, rejected]
+        description: Approval status
+      difficulty:
+        type: string
+        enum: [very-easy, easy, medium, hard, very-hard]
+        description: Complexity level with hyphens
+      language:
+        type: string
+        enum: [en, es, fr, de, ja, zh-cn]
+        description: Target language code
+      format:
+        type: string
+        enum: [json, xml, yaml, csv]
+        description: Output format preference
+      confidence_level:
+        type: integer
+        enum: [1, 2, 3, 4, 5]
+        description: Confidence level as integer
+    required: [priority, status, difficulty, language, format, confidence_level]
+output:
+  schema:
+    type: object
+    properties:
+      result:
+        type: string
+        enum: [success, failure, retry]
+        description: Processing result
+      processing_status:
+        type: string
+        enum: [queued, processing, completed, failed, cancelled]
+        description: Detailed processing status
+      error_code:
+        type: string
+        enum: [timeout, invalid_input, server_error, rate_limit]
+        description: Error code if processing fails
+      quality_score:
+        type: integer
+        enum: [1, 2, 3, 4, 5]
+        description: Output quality score
+      urgency:
+        type: string
+        enum: [low, normal, high, critical]
+        description: Result urgency level
+    required: [result, processing_status, quality_score]
+---
+Process {{language}} content at {{priority}} priority with {{difficulty}} complexity in {{format}} format.
