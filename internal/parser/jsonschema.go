@@ -210,27 +210,38 @@ func handleArrayField(
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
 	// Check if array items are objects with properties
 	items, hasItems := fieldDefMap["items"]
-	if hasItems {
-		itemsMap, isMap := items.(map[string]any)
-		if isMap {
-			itemType, hasType := itemsMap["type"].(string)
-			_, hasProperties := itemsMap["properties"].(map[string]any)
-			_, hasEnum := itemsMap["enum"]
+	if !hasItems {
+		// Handle simple arrays (primitives, etc.)
+		field = parseJSONSchemaArray(field, fieldDefMap)
 
-			// If items are objects with properties, create a nested struct
-			if hasType && itemType == "object" && hasProperties {
-				return handleObjectArrayField(field, itemsMap, schemaType)
-			}
+		return field, nil, nil, nil, nil
+	}
 
-			// If items have enum values, create an enum type for the array items
-			if hasEnum {
-				updatedField, enumDef, err := parseJSONSchemaArrayEnum(field, itemsMap)
-				if err != nil {
-					return field, nil, nil, nil, err
-				}
-				return updatedField, []codegen.GoEnum{*enumDef}, nil, nil, nil
-			}
+	itemsMap, isMap := items.(map[string]any)
+	if !isMap {
+		// Handle simple arrays (primitives, etc.)
+		field = parseJSONSchemaArray(field, fieldDefMap)
+
+		return field, nil, nil, nil, nil
+	}
+
+	itemType, hasType := itemsMap["type"].(string)
+	_, hasProperties := itemsMap["properties"].(map[string]any)
+	_, hasEnum := itemsMap["enum"]
+
+	// If items are objects with properties, create a nested struct
+	if hasType && itemType == "object" && hasProperties {
+		return handleObjectArrayField(field, itemsMap, schemaType)
+	}
+
+	// If items have enum values, create an enum type for the array items
+	if hasEnum {
+		updatedField, enumDef, err := parseJSONSchemaArrayEnum(field, itemsMap)
+		if err != nil {
+			return field, nil, nil, nil, err
 		}
+
+		return updatedField, []codegen.GoEnum{*enumDef}, nil, nil, nil
 	}
 
 	// Handle simple arrays (primitives, etc.)
@@ -264,7 +275,7 @@ func handleObjectArrayField(
 	}
 
 	// Parse the object as if it were a direct object field
-	itemField, allEnums, directStruct, nestedStructs, err := parseJSONSchemaObjectField(
+	_, allEnums, directStruct, nestedStructs, err := parseJSONSchemaObjectField(
 		itemField,
 		itemsMap,
 		schemaType,
