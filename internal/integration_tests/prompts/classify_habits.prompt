@@ -6,8 +6,7 @@ input:
     properties:
       habit:
         type: string
-        description: The habit description to
-        classify
+        description: The habit description to classify
     required:
       - habit
 output:
@@ -18,7 +17,7 @@ output:
       explanation:
         type: string
         description: insightful explanation of why this habit fits the category
-      category:
+      transformation_category:
         type: string
         enum: [physical_vitality, mental_mastery, creative_expression, social_connection, financial_wisdom, environmental_harmony, spiritual_growth, professional_excellence, learning_adventure, self_care_ritual, mindful_presence]
         description: The transformative category of the habit
@@ -27,7 +26,7 @@ output:
         enum: [foundational, growth, mastery]
         description: The developmental stage this habit represents
     required:
-      - category
+      - transformation_category
       - explanation
       - impact_level
 ---

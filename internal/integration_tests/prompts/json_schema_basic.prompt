@@ -7,7 +7,7 @@ input:
       habit:
         type: string
         description: The habit to analyze
-      category:
+      habit_category:
         type: string
         enum: [physical, mental, social]
         description: Habit category
@@ -16,7 +16,7 @@ input:
         description: Number of words
     required:
       - habit
-      - category
+      - habit_category
 output:
   schema:
     type: object

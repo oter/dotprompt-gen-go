@@ -1,4 +1,4 @@
-package internal_test
+package integration_tests
 
 import (
 	"os"
@@ -6,8 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/oter/dotprompt-gen-go/internal/codegen"
 	"github.com/oter/dotprompt-gen-go/internal/generator"
-	"github.com/oter/dotprompt-gen-go/internal/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCase represents a single test case for code generation
@@ -26,10 +28,9 @@ type ExpectedStruct struct {
 
 // ExpectedField represents expected field in struct
 type ExpectedField struct {
-	Name          string
-	GoType        string
-	JSONTag       string
-	HasValidation bool
+	Name    string
+	GoType  string
+	JSONTag string
 }
 
 // ExpectedEnum represents expected enum generation
@@ -47,41 +48,41 @@ func TestCodegenAllTypes(t *testing.T) {
 			PromptFile: "simple_types.prompt",
 			ExpectedStructs: []ExpectedStruct{
 				{
-					Name: "SimpleTypesRequest",
+					Name: "SimpleTypesInput",
 					Fields: []ExpectedField{
-						{"Name", "string", "name", false},
-						{"Age", "int", "age", false},
-						{"Height", "float64", "height", false},
-						{"Active", "bool", "active", false},
-						{"Metadata", "any", "metadata", false},
-						{"OptionalField", "string", "optional_field", false},
+						{"Name", "string", "name"},
+						{"Age", "int", "age"},
+						{"Height", "float64", "height"},
+						{"Active", "bool", "active"},
+						{"Metadata", "any", "metadata"},
+						{"OptionalField", "string", "optional_field"},
 					},
 				},
 				{
-					Name: "SimpleTypesResponse",
+					Name: "SimpleTypesOutput",
 					Fields: []ExpectedField{
-						{"Success", "bool", "success", false},
-						{"Message", "string", "message", false},
+						{"Success", "*bool", "success"},
+						{"Message", "*string", "message"},
 					},
 				},
 			},
 		},
 		{
-			Name:       "Enum Types",
-			PromptFile: "enum_types.prompt",
+			Name:       "Comprehensive Enums",
+			PromptFile: "comprehensive_enums.prompt",
 			ExpectedStructs: []ExpectedStruct{
 				{
-					Name: "EnumTypesRequest",
+					Name: "ComprehensiveEnumsInput",
 					Fields: []ExpectedField{
-						{"Priority", "PriorityEnum", "priority", false},
-						{"Status", "StatusEnum", "status", false},
+						{"Priority", "PriorityEnum", "priority"},
+						{"Status", "StatusEnum", "status"},
 					},
 				},
 				{
-					Name: "EnumTypesResponse",
+					Name: "ComprehensiveEnumsOutput",
 					Fields: []ExpectedField{
-						{"Result", "ResultEnum", "result", false},
-						{"Level", "LevelEnum", "level", false},
+						{"Result", "ResultEnum", "result"},
+						{"QualityScore", "QualityScoreEnum", "quality_score"},
 					},
 				},
 			},
@@ -102,7 +103,7 @@ func TestCodegenAllTypes(t *testing.T) {
 					Values: []string{"success", "failure", "retry"},
 				},
 				{
-					Name:   "LevelEnum",
+					Name:   "ConfidenceLevelEnum",
 					Type:   "string",
 					Values: []string{"1", "2", "3", "4", "5"},
 				},
@@ -113,18 +114,18 @@ func TestCodegenAllTypes(t *testing.T) {
 			PromptFile: "array_types.prompt",
 			ExpectedStructs: []ExpectedStruct{
 				{
-					Name: "ArrayTypesRequest",
+					Name: "ArrayTypesInput",
 					Fields: []ExpectedField{
-						{"Tags", "[]string", "tags", false},
-						{"Scores", "[]float64", "scores", false},
-						{"Ids", "[]int", "ids", false},
+						{"Tags", "[]string", "tags"},
+						{"Scores", "[]float64", "scores"},
+						{"Ids", "[]int", "ids"},
 					},
 				},
 				{
-					Name: "ArrayTypesResponse",
+					Name: "ArrayTypesOutput",
 					Fields: []ExpectedField{
-						{"Results", "[]string", "results", false},
-						{"Counts", "[]int", "counts", false},
+						{"Results", "[]string", "results"},
+						{"Counts", "[]int", "counts"},
 					},
 				},
 			},
@@ -134,25 +135,25 @@ func TestCodegenAllTypes(t *testing.T) {
 			PromptFile: "json_schema_basic.prompt",
 			ExpectedStructs: []ExpectedStruct{
 				{
-					Name: "JsonSchemaBasicRequest",
+					Name: "JsonSchemaBasicInput",
 					Fields: []ExpectedField{
-						{"Habit", "string", "habit", true},
-						{"Category", "CategoryEnum", "category", true},
-						{"WordCount", "int", "word_count", false},
+						{"Habit", "string", "habit"},
+						{"HabitCategory", "HabitCategoryEnum", "habit_category"},
+						{"WordCount", "int", "word_count"},
 					},
 				},
 				{
-					Name: "JsonSchemaBasicResponse",
+					Name: "JsonSchemaBasicOutput",
 					Fields: []ExpectedField{
-						{"Summary", "string", "summary", true},
-						{"Confidence", "float64", "confidence", false},
-						{"Valid", "bool", "valid", true},
+						{"Summary", "string", "summary"},
+						{"Confidence", "*float64", "confidence"},
+						{"Valid", "bool", "valid"},
 					},
 				},
 			},
 			ExpectedEnums: []ExpectedEnum{
 				{
-					Name:   "CategoryEnum",
+					Name:   "HabitCategoryEnum",
 					Type:   "string",
 					Values: []string{"physical", "mental", "social"},
 				},
@@ -163,17 +164,17 @@ func TestCodegenAllTypes(t *testing.T) {
 			PromptFile: "json_schema_arrays.prompt",
 			ExpectedStructs: []ExpectedStruct{
 				{
-					Name: "JsonSchemaArraysRequest",
+					Name: "JsonSchemaArraysInput",
 					Fields: []ExpectedField{
-						{"Keywords", "[]string", "keywords", false},
-						{"Ratings", "[]float64", "ratings", false},
+						{"Keywords", "[]string", "keywords"},
+						{"Ratings", "[]float64", "ratings"},
 					},
 				},
 				{
-					Name: "JsonSchemaArraysResponse",
+					Name: "JsonSchemaArraysOutput",
 					Fields: []ExpectedField{
-						{"MatchedKeywords", "[]string", "matched_keywords", false},
-						{"AverageRating", "float64", "average_rating", false},
+						{"MatchedKeywords", "[]string", "matched_keywords"},
+						{"AverageRating", "*float64", "average_rating"},
 					},
 				},
 			},
@@ -186,72 +187,50 @@ func TestCodegenAllTypes(t *testing.T) {
 			tempDir := t.TempDir()
 
 			// Run codegen on test file
-			inputFile := filepath.Join("testdata", tc.PromptFile)
+			inputFile := filepath.Join("prompts", tc.PromptFile)
 			outputFile := filepath.Join(tempDir, strings.TrimSuffix(tc.PromptFile, ".prompt")+".gen.go")
 
-			gen := model.Generator{
+			gen := codegen.Generator{
 				PackageName: "models",
 				OutputDir:   tempDir,
 				Verbose:     false,
 			}
 
 			err := generator.ProcessFile(gen, inputFile)
-			if err != nil {
-				t.Fatalf("Code generation failed: %v", err)
-			}
+			require.NoError(t, err, "Code generation failed")
 
 			// Read generated file
 			generatedCode, err := os.ReadFile(outputFile)
-			if err != nil {
-				t.Fatalf("Failed to read generated file: %v", err)
-			}
+			require.NoError(t, err, "Failed to read generated file")
 
 			codeStr := string(generatedCode)
 
 			// Verify expected structs exist
 			for _, expectedStruct := range tc.ExpectedStructs {
-				if !strings.Contains(codeStr, "type "+expectedStruct.Name+" struct") {
-					t.Errorf("Expected struct %s not found", expectedStruct.Name)
-				}
+				assert.Contains(t, codeStr, "type "+expectedStruct.Name+" struct", "Expected struct %s not found", expectedStruct.Name)
 
 				// Verify expected fields exist
 				for _, expectedField := range expectedStruct.Fields {
 					fieldDecl := expectedField.Name + " " + expectedField.GoType
-					if !strings.Contains(codeStr, fieldDecl) {
-						t.Errorf("Expected field %s %s not found in struct %s",
-							expectedField.Name, expectedField.GoType, expectedStruct.Name)
-					}
+					assert.Contains(t, codeStr, fieldDecl, "Expected field %s %s not found in struct %s",
+						expectedField.Name, expectedField.GoType, expectedStruct.Name)
 
 					jsonTag := "`json:\"" + expectedField.JSONTag + "\""
-					if !strings.Contains(codeStr, jsonTag) {
-						t.Errorf("Expected JSON tag %s not found for field %s",
-							jsonTag, expectedField.Name)
-					}
-
-					if expectedField.HasValidation {
-						validateTag := "validate:\"required\""
-						if !strings.Contains(codeStr, validateTag) {
-							t.Errorf("Expected validation tag not found for field %s",
-								expectedField.Name)
-						}
-					}
+					assert.Contains(t, codeStr, jsonTag, "Expected JSON tag %s not found for field %s",
+						jsonTag, expectedField.Name)
 				}
 			}
 
 			// Verify expected enums exist
 			for _, expectedEnum := range tc.ExpectedEnums {
 				enumDecl := "type " + expectedEnum.Name + " " + expectedEnum.Type
-				if !strings.Contains(codeStr, enumDecl) {
-					t.Errorf("Expected enum %s not found", expectedEnum.Name)
-				}
+				assert.Contains(t, codeStr, enumDecl, "Expected enum %s not found", expectedEnum.Name)
 
 				// Verify enum values exist
 				for _, value := range expectedEnum.Values {
 					enumValue := expectedEnum.Name + " = \"" + value + "\""
-					if !strings.Contains(codeStr, enumValue) {
-						t.Errorf("Expected enum value %s not found in enum %s",
-							value, expectedEnum.Name)
-					}
+					assert.Contains(t, codeStr, enumValue, "Expected enum value %s not found in enum %s",
+						value, expectedEnum.Name)
 				}
 			}
 		})

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,11 +9,16 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/oter/dotprompt-gen-go/internal/model"
+	"github.com/oter/dotprompt-gen-go/internal/ast"
 )
 
-// ParsePromptFile parses a dotprompt file and returns a PromptFile
-func ParsePromptFile(filePath string) (*model.PromptFile, error) {
+const (
+	// minimumFrontmatterParts is the minimum number of parts when splitting by --- delimiters.
+	minimumFrontmatterParts = 3
+)
+
+// ParsePromptFile parses a dotprompt file and returns a PromptFile.
+func ParsePromptFile(filePath string) (*ast.PromptFile, error) {
 	// Validate and clean the file path to prevent path traversal attacks
 	cleanPath := filepath.Clean(filePath)
 
@@ -32,6 +38,7 @@ func ParsePromptFile(filePath string) (*model.PromptFile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to access file %s: %w", absPath, err)
 	}
+
 	if !info.Mode().IsRegular() {
 		return nil, fmt.Errorf("path is not a regular file: %s", absPath)
 	}
@@ -45,18 +52,21 @@ func ParsePromptFile(filePath string) (*model.PromptFile, error) {
 	return ParsePromptContent(string(content), absPath)
 }
 
-// ParsePromptContent parses dotprompt content and returns a PromptFile
-func ParsePromptContent(content, filename string) (*model.PromptFile, error) {
+// ParsePromptContent parses dotprompt content and returns a PromptFile.
+func ParsePromptContent(content, filename string) (*ast.PromptFile, error) {
 	// Split by frontmatter delimiters
 	parts := strings.Split(content, "---")
-	if len(parts) < 3 {
-		return nil, fmt.Errorf("invalid dotprompt format: missing frontmatter delimiters")
+	if len(parts) < minimumFrontmatterParts {
+		return nil, errors.New("invalid dotprompt format: missing frontmatter delimiters")
 	}
 
 	// Parse YAML frontmatter
 	frontmatterContent := strings.TrimSpace(parts[1])
-	var frontmatter model.FrontmatterData
-	if err := yaml.Unmarshal([]byte(frontmatterContent), &frontmatter); err != nil {
+
+	var frontmatter ast.FrontmatterData
+
+	err := yaml.Unmarshal([]byte(frontmatterContent), &frontmatter)
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML frontmatter: %w", err)
 	}
 
@@ -64,62 +74,9 @@ func ParsePromptContent(content, filename string) (*model.PromptFile, error) {
 	templateParts := parts[2:]
 	template := strings.TrimSpace(strings.Join(templateParts, "---"))
 
-	return &model.PromptFile{
+	return &ast.PromptFile{
+		Filename:    filename,
 		Frontmatter: frontmatter,
 		Template:    template,
-		Filename:    filename,
 	}, nil
-}
-
-// HasSchema checks if the prompt file has input or output schema
-func HasSchema(pf *model.PromptFile) bool {
-	return pf.Frontmatter.Input.Schema != nil || pf.Frontmatter.Output.Schema != nil
-}
-
-// GetInputSchema returns the input schema if available
-func GetInputSchema(pf *model.PromptFile) any {
-	return pf.Frontmatter.Input.Schema
-}
-
-// GetOutputSchema returns the output schema if available
-func GetOutputSchema(pf *model.PromptFile) any {
-	return pf.Frontmatter.Output.Schema
-}
-
-// GetRequiredInputFields returns required input fields
-func GetRequiredInputFields(pf *model.PromptFile) []string {
-	// Check if schema has required fields
-	if schema, ok := pf.Frontmatter.Input.Schema.(map[string]any); ok {
-		if required, ok := schema["required"].([]any); ok {
-			var fields []string
-			for _, field := range required {
-				if fieldStr, ok := field.(string); ok {
-					fields = append(fields, fieldStr)
-				}
-			}
-			return fields
-		}
-	}
-
-	// Fallback to frontmatter required fields
-	return pf.Frontmatter.Input.Required
-}
-
-// GetRequiredOutputFields returns required output fields
-func GetRequiredOutputFields(pf *model.PromptFile) []string {
-	// Check if schema has required fields
-	if schema, ok := pf.Frontmatter.Output.Schema.(map[string]any); ok {
-		if required, ok := schema["required"].([]any); ok {
-			var fields []string
-			for _, field := range required {
-				if fieldStr, ok := field.(string); ok {
-					fields = append(fields, fieldStr)
-				}
-			}
-			return fields
-		}
-	}
-
-	// Fallback to frontmatter required fields
-	return pf.Frontmatter.Output.Required
 }

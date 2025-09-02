@@ -21,6 +21,7 @@ alwaysApply: true
 - Ask clarifying questions - don't assume requirements
 - Break work into small, testable tasks
 - Document technical approach
+- **FEATURE REQUESTS**: When user requests a feature - plan completely but DO NOT implement until explicitly approved
 - Get alignment before implementation
 - **Update task status** - Mark as in-progress when starting
 

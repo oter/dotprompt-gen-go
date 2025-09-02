@@ -1,0 +1,120 @@
+---
+model: openai/gpt-4
+input:
+  schema:
+    type: object
+    properties:
+      # Basic type arrays
+      string_list:
+        type: array
+        items:
+          type: string
+        description: Array of strings
+      integer_list:
+        type: array
+        items:
+          type: integer
+        description: Array of integers
+      number_list:
+        type: array
+        items:
+          type: number
+        description: Array of numbers
+      boolean_list:
+        type: array
+        items:
+          type: boolean
+        description: Array of booleans
+      # Enum arrays
+      category_list:
+        type: array
+        items:
+          type: string
+          enum: [tech, finance, health, education]
+        description: Array of category enums
+      priority_list:
+        type: array
+        items:
+          type: string
+          enum: [low, medium, high, urgent]
+        description: Array of priority enums
+      # Object arrays
+      user_list:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            age:
+              type: integer
+            active:
+              type: boolean
+          required: [name]
+        description: Array of user objects
+      # Optional arrays
+      optional_tags:
+        type: array
+        items:
+          type: string
+        description: Optional string array
+    required: [string_list, integer_list, boolean_list, user_list]
+output:
+  schema:
+    type: object
+    properties:
+      # Output arrays covering all types
+      processed_strings:
+        type: array
+        items:
+          type: string
+        description: Processed string results
+      calculated_numbers:
+        type: array
+        items:
+          type: number
+        description: Calculated numeric results
+      status_flags:
+        type: array
+        items:
+          type: boolean
+        description: Status boolean flags
+      selected_categories:
+        type: array
+        items:
+          type: string
+          enum: [tech, finance, health, education]
+        description: Selected category enums
+      processed_users:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            user_status:
+              type: string
+              enum: [active, inactive, suspended]
+        description: Processed user objects
+      enum_array_in_object:
+        type: object
+        description: Enum array in object
+        properties:
+          enum_array:
+            type: array
+            items:
+              enum: [active, inactive, suspended]
+            minItems: 1
+            maxItems: 3
+            description: Enum array in object
+          string_field:
+            type: string
+            description: String field
+      summary_counts:
+        type: array
+        items:
+          type: integer
+        description: Summary integer counts
+    required: [processed_strings, status_flags, processed_users]
+---
+Process {{string_list.length}} strings, {{integer_list.length}} integers, {{boolean_list.length}} flags, and {{user_list.length}} users.

@@ -1,8 +1,11 @@
-package schema
+package parser
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCodegenDeeplyNestedStructs tests parsing of schemas with 4 levels of nesting
@@ -68,20 +71,15 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 		"required": []any{"level1", "root_value"},
 	}
 
-	fields, enums, structs, err := ParseSchemaWithStructs(deeplyNestedSchema, []string{"level1", "root_value"})
-	if err != nil {
-		t.Fatalf("Failed to parse deeply nested schema: %v", err)
-	}
+	fields, enums, structs, err := ParseSchemaWithStructs(deeplyNestedSchema, []string{"level1", "root_value"}, SchemaTypeOutput)
+	require.NoError(t, err, "Failed to parse deeply nested schema")
 
 	// Verify we have the expected number of fields at root level
-	if len(fields) != 2 {
-		t.Errorf("Expected 2 root fields, got %d", len(fields))
-	}
+	assert.Len(t, fields, 2, "Expected 2 root fields")
 
 	// Verify we have all nested structs (Level1, Level1Level2, Level1Level2Level3, Level1Level2Level3Level4)
 	expectedStructCount := 4
-	if len(structs) != expectedStructCount {
-		t.Errorf("Expected %d nested structs, got %d", expectedStructCount, len(structs))
+	if !assert.Len(t, structs, expectedStructCount, "Expected %d nested structs", expectedStructCount) {
 		for i, s := range structs {
 			t.Logf("Struct %d: %s", i, s.Name)
 		}
@@ -89,8 +87,7 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 
 	// Verify we have the final enum
 	expectedEnumCount := 1
-	if len(enums) != expectedEnumCount {
-		t.Errorf("Expected %d enums, got %d", expectedEnumCount, len(enums))
+	if !assert.Len(t, enums, expectedEnumCount, "Expected %d enums", expectedEnumCount) {
 		for i, e := range enums {
 			t.Logf("Enum %d: %s", i, e.Name)
 		}
@@ -99,9 +96,7 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 	// Verify struct names are unique and correctly prefixed
 	structNames := make(map[string]bool)
 	for _, s := range structs {
-		if structNames[s.Name] {
-			t.Errorf("Duplicate struct name: %s", s.Name)
-		}
+		assert.False(t, structNames[s.Name], "Duplicate struct name: %s", s.Name)
 		structNames[s.Name] = true
 	}
 
@@ -136,9 +131,7 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 		}
 	}
 
-	if deepestStruct == nil {
-		t.Fatal("Could not find the deepest nested struct (Level4)")
-	}
+	require.NotNil(t, deepestStruct, "Could not find the deepest nested struct (Level4)")
 
 	// Check that the deepest struct has the expected fields
 	expectedDeepFields := map[string]string{
@@ -146,18 +139,13 @@ func TestCodegenDeeplyNestedStructs(t *testing.T) {
 		"FinalEnum":  "FinalEnumEnum",
 	}
 
-	if len(deepestStruct.Fields) != len(expectedDeepFields) {
-		t.Errorf("Expected %d fields in deepest struct, got %d", len(expectedDeepFields), len(deepestStruct.Fields))
-	}
+	assert.Len(t, deepestStruct.Fields, len(expectedDeepFields), "Expected specific number of fields in deepest struct")
 
 	for _, field := range deepestStruct.Fields {
 		expectedType, exists := expectedDeepFields[field.Name]
-		if !exists {
-			t.Errorf("Unexpected field in deepest struct: %s", field.Name)
-			continue
-		}
-		if field.GoType != expectedType {
-			t.Errorf("Field %s: expected type %s, got %s", field.Name, expectedType, field.GoType)
+		assert.True(t, exists, "Unexpected field in deepest struct: %s", field.Name)
+		if exists {
+			assert.Equal(t, expectedType, field.GoType, "Field %s type mismatch", field.Name)
 		}
 	}
 
@@ -236,15 +224,12 @@ func TestCodegenRealisticDeeplyNestedStructs(t *testing.T) {
 		"required": []any{"classification"},
 	}
 
-	_, enums, structs, err := ParseSchemaWithStructs(realisticSchema, []string{"classification"})
-	if err != nil {
-		t.Fatalf("Failed to parse realistic nested schema: %v", err)
-	}
+	_, enums, structs, err := ParseSchemaWithStructs(realisticSchema, []string{"classification"}, SchemaTypeOutput)
+	require.NoError(t, err, "Failed to parse realistic nested schema")
 
 	// Verify we have at least 4 levels of nesting: Classification -> Evaluation -> Validity -> Checks
 	expectedMinStructs := 4
-	if len(structs) < expectedMinStructs {
-		t.Errorf("Expected at least %d nested structs, got %d", expectedMinStructs, len(structs))
+	if !assert.GreaterOrEqual(t, len(structs), expectedMinStructs, "Expected at least %d nested structs", expectedMinStructs) {
 		for i, s := range structs {
 			t.Logf("Struct %d: %s with %d fields", i, s.Name, len(s.Fields))
 		}
@@ -252,8 +237,7 @@ func TestCodegenRealisticDeeplyNestedStructs(t *testing.T) {
 
 	// Verify we have the expected enums (ReasonCodeEnum, PrimaryEnum, SecondaryEnum)
 	expectedMinEnums := 3
-	if len(enums) < expectedMinEnums {
-		t.Errorf("Expected at least %d enums, got %d", expectedMinEnums, len(enums))
+	if !assert.GreaterOrEqual(t, len(enums), expectedMinEnums, "Expected at least %d enums", expectedMinEnums) {
 		for i, e := range enums {
 			t.Logf("Enum %d: %s with %d values", i, e.Name, len(e.Values))
 		}
@@ -270,9 +254,7 @@ func TestSchemaFormatDetection(t *testing.T) {
 		"age":  "integer, user age",
 	}
 
-	if !IsPicoschema(picoSchema) {
-		t.Error("Failed to detect Picoschema format")
-	}
+	assert.True(t, IsPicoschema(picoSchema), "Failed to detect Picoschema format")
 
 	// Test JSON Schema detection
 	jsonSchema := map[string]any{
@@ -284,13 +266,9 @@ func TestSchemaFormatDetection(t *testing.T) {
 		},
 	}
 
-	if !IsJSONSchema(jsonSchema) {
-		t.Error("Failed to detect JSON Schema format")
-	}
+	assert.True(t, IsJSONSchema(jsonSchema), "Failed to detect JSON Schema format")
 
-	if IsPicoschema(jsonSchema) {
-		t.Error("Incorrectly detected JSON Schema as Picoschema")
-	}
+	assert.False(t, IsPicoschema(jsonSchema), "Incorrectly detected JSON Schema as Picoschema")
 }
 
 // TestFieldOrderingConsistency tests that fields are generated in consistent order
@@ -305,11 +283,9 @@ func TestFieldOrderingConsistency(t *testing.T) {
 
 	// Generate fields multiple times to ensure consistent ordering
 	var fieldOrders [][]string
-	for i := 0; i < 5; i++ {
-		fields, _, err := ParseSchema(picoschema, []string{})
-		if err != nil {
-			t.Fatalf("Failed to parse picoschema: %v", err)
-		}
+	for range 5 {
+		fields, _, _, err := ParseSchemaWithStructs(picoschema, []string{}, SchemaTypeInput)
+		require.NoError(t, err, "Failed to parse picoschema")
 
 		var fieldNames []string
 		for _, field := range fields {
@@ -321,13 +297,10 @@ func TestFieldOrderingConsistency(t *testing.T) {
 	// All field orders should be identical
 	expectedOrder := []string{"AlphaField", "BetaField", "MiddleField", "ZebraField"}
 	for i, fieldOrder := range fieldOrders {
-		if len(fieldOrder) != len(expectedOrder) {
-			t.Errorf("Run %d: expected %d fields, got %d", i+1, len(expectedOrder), len(fieldOrder))
-			continue
-		}
+		assert.Len(t, fieldOrder, len(expectedOrder), "Run %d: expected %d fields", i+1, len(expectedOrder))
 		for j, expectedName := range expectedOrder {
-			if fieldOrder[j] != expectedName {
-				t.Errorf("Run %d: expected field %d to be %s, got %s", i+1, j, expectedName, fieldOrder[j])
+			if j < len(fieldOrder) {
+				assert.Equal(t, expectedName, fieldOrder[j], "Run %d: expected field %d to be %s", i+1, j, expectedName)
 			}
 		}
 	}
@@ -353,11 +326,9 @@ func TestFieldOrderingConsistency(t *testing.T) {
 
 	// Generate fields multiple times to ensure consistent ordering
 	var jsonFieldOrders [][]string
-	for i := 0; i < 5; i++ {
-		fields, _, _, err := ParseSchemaWithStructs(jsonSchema, []string{})
-		if err != nil {
-			t.Fatalf("Failed to parse JSON schema: %v", err)
-		}
+	for range 5 {
+		fields, _, _, err := ParseSchemaWithStructs(jsonSchema, []string{}, SchemaTypeOutput)
+		require.NoError(t, err, "Failed to parse JSON schema")
 
 		var fieldNames []string
 		for _, field := range fields {
@@ -369,13 +340,10 @@ func TestFieldOrderingConsistency(t *testing.T) {
 	// All field orders should be identical
 	expectedJSONOrder := []string{"AlphaProp", "MiddleProp", "ZebraProp"}
 	for i, fieldOrder := range jsonFieldOrders {
-		if len(fieldOrder) != len(expectedJSONOrder) {
-			t.Errorf("JSON Run %d: expected %d fields, got %d", i+1, len(expectedJSONOrder), len(fieldOrder))
-			continue
-		}
+		assert.Len(t, fieldOrder, len(expectedJSONOrder), "JSON Run %d: expected %d fields", i+1, len(expectedJSONOrder))
 		for j, expectedName := range expectedJSONOrder {
-			if fieldOrder[j] != expectedName {
-				t.Errorf("JSON Run %d: expected field %d to be %s, got %s", i+1, j, expectedName, fieldOrder[j])
+			if j < len(fieldOrder) {
+				assert.Equal(t, expectedName, fieldOrder[j], "JSON Run %d: expected field %d to be %s", i+1, j, expectedName)
 			}
 		}
 	}

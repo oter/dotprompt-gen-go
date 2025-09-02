@@ -1,6 +1,6 @@
 # dotprompt-gen-go
 
-A Go code generator that converts dotprompt files into type-safe Go request/response structs for AI applications.
+A Go code generator that converts dotprompt files into type-safe Go input/output structs for AI applications.
 
 ## What it does
 
@@ -96,14 +96,14 @@ dotprompt-gen-go -file classify_habits.prompt
 
 package models
 
-// ClassifyHabitsRequest represents the input for classify habits
-type ClassifyHabitsRequest struct {
+// ClassifyHabitsInput represents the input for classify habits
+type ClassifyHabitsInput struct {
 	// The habit to classify
 	Habit string `json:"habit" validate:"required"`
 }
 
-// ClassifyHabitsResponse represents the output for classify habits  
-type ClassifyHabitsResponse struct {
+// ClassifyHabitsOutput represents the output for classify habits  
+type ClassifyHabitsOutput struct {
 	// The category of the habit
 	Category CategoryEnum `json:"category" validate:"required"`
 	// Explanation of the classification
@@ -309,7 +309,7 @@ go generate ./...
 
 ## Examples
 
-See the `internal/testdata/` directory for comprehensive examples including:
+See the `internal/integration_tests/prompts/` directory for comprehensive examples including:
 - Basic JSON Schema types
 - Complex nested objects  
 - Array handling

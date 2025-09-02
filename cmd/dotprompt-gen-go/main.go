@@ -15,8 +15,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/oter/dotprompt-gen-go/internal/codegen"
 	"github.com/oter/dotprompt-gen-go/internal/generator"
-	"github.com/oter/dotprompt-gen-go/internal/model"
 )
 
 func main() {
@@ -52,6 +52,7 @@ func main() {
 
 	if *help {
 		flag.Usage()
+
 		return
 	}
 
@@ -67,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	gen := model.Generator{
+	gen := codegen.Generator{
 		PackageName: *outputPkg,
 		OutputDir:   *outputDir,
 		Verbose:     *verbose,

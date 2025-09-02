@@ -3,10 +3,10 @@ model: openai/gpt-4
 input:
   schema:
     # Picoschema format for input
-    user_id: string, the user identifier
-    preferences: string(array): string, user preferences  
-    role: string(enum): [admin, user, guest], user role
-    settings?: any, optional user settings
+    user_id: string # the user identifier
+    preferences: string(array) # user preferences  
+    role: string(enum):[admin, user, guest] # user role
+    settings?: any # optional user settings
 output:
   # JSON Schema format for output
   schema:
@@ -17,7 +17,7 @@ output:
         properties:
           id:
             type: string
-          role:
+          user_role:
             type: string
             enum: [admin, user, guest]
       recommendations:
