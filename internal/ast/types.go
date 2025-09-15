@@ -6,9 +6,13 @@ import (
 
 // PromptFile represents a parsed dotprompt file.
 type PromptFile struct {
-	Filename    string          // File identifier
-	Frontmatter FrontmatterData `yaml:",inline"` // YAML metadata defining structure
-	Template    string          // Template content
+	Filename               string              // File identifier
+	Frontmatter            FrontmatterData     `yaml:",inline"` // YAML metadata defining structure
+	Template               string              // Template content
+	InputFieldOrder        []string            // Original field order from input schema
+	OutputFieldOrder       []string            // Original field order from output schema
+	InputNestedFieldOrder  map[string][]string // Nested object field orders for input schema (path -> field order)
+	OutputNestedFieldOrder map[string][]string // Nested object field orders for output schema (path -> field order)
 }
 
 // FrontmatterData represents the YAML frontmatter in a dotprompt file.

@@ -4,20 +4,20 @@ package prompts
 
 // ArrayTypesInput represents the input for array types
 type ArrayTypesInput struct {
-	// List of IDs
-	Ids []int `json:"ids"`
-	// List of scores
-	Scores []float64 `json:"scores"`
 	// List of tags
 	Tags []string `json:"tags"`
+	// List of scores
+	Scores []float64 `json:"scores"`
+	// List of IDs
+	Ids []int `json:"ids"`
 }
 
 // ArrayTypesOutput represents the output for array types
 type ArrayTypesOutput struct {
-	// Result counts
-	Counts []int `json:"counts"`
 	// Processed results
 	Results []string `json:"results"`
+	// Result counts
+	Counts []int `json:"counts"`
 }
 
 // Validate validates all fields in ArrayTypesInput

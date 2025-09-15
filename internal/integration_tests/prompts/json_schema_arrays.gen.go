@@ -12,10 +12,10 @@ type JsonSchemaArraysInput struct {
 
 // JsonSchemaArraysOutput represents the output for json schema arrays
 type JsonSchemaArraysOutput struct {
-	// Average of all ratings
-	AverageRating *float64 `json:"average_rating"`
 	// Keywords that matched
 	MatchedKeywords []string `json:"matched_keywords"`
+	// Average of all ratings
+	AverageRating *float64 `json:"average_rating"`
 }
 
 // Validate validates all fields in JsonSchemaArraysInput

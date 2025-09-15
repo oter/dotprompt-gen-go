@@ -49,6 +49,16 @@ func parsePicoschema(
 	requiredFields []string,
 	schemaType SchemaType,
 ) ([]codegen.GoField, []codegen.GoEnum, error) {
+	return parsePicoschemaWithFieldOrder(schema, requiredFields, schemaType, nil)
+}
+
+// parsePicoschemaWithFieldOrder parses Picoschema format with preserved field order.
+func parsePicoschemaWithFieldOrder(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+) ([]codegen.GoField, []codegen.GoEnum, error) {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
 		return nil, nil, errors.New("schema must be an object")
@@ -74,13 +84,36 @@ func parsePicoschema(
 		}
 	}
 
-	// Collect field names and sort them to ensure consistent ordering
+	// Use preserved field order if available, otherwise fall back to sorted order
 	var fieldNames []string
-	for fieldName := range schemaMap {
-		fieldNames = append(fieldNames, fieldName)
-	}
+	if len(fieldOrder) > 0 {
+		// Use preserved order, but only include fields that exist in schema
+		for _, fieldName := range fieldOrder {
+			if _, exists := schemaMap[fieldName]; exists {
+				fieldNames = append(fieldNames, fieldName)
+			}
+		}
 
-	sort.Strings(fieldNames)
+		// Add any remaining fields not in the preserved order (edge case)
+		for fieldName := range schemaMap {
+			found := false
+			for _, orderedField := range fieldNames {
+				if orderedField == fieldName {
+					found = true
+					break
+				}
+			}
+			if !found {
+				fieldNames = append(fieldNames, fieldName)
+			}
+		}
+	} else {
+		// Fallback to alphabetical sorting for consistency
+		for fieldName := range schemaMap {
+			fieldNames = append(fieldNames, fieldName)
+		}
+		sort.Strings(fieldNames)
+	}
 
 	// Process fields in sorted order
 	for _, fieldName := range fieldNames {

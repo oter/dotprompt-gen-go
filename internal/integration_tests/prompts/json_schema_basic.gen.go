@@ -17,10 +17,10 @@ type JsonSchemaBasicInput struct {
 
 // JsonSchemaBasicOutput represents the output for json schema basic
 type JsonSchemaBasicOutput struct {
-	// Confidence score
-	Confidence *float64 `json:"confidence"`
 	// Generated summary
 	Summary string `json:"summary"`
+	// Confidence score
+	Confidence *float64 `json:"confidence"`
 	// Whether the input is valid
 	Valid bool `json:"valid"`
 }

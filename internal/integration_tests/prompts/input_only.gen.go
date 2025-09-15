@@ -4,10 +4,10 @@ package prompts
 
 // InputOnlyInput represents the input for input only
 type InputOnlyInput struct {
-	// optional result limit
-	Limit int `json:"limit"`
 	// the search query
 	Query string `json:"query"`
+	// optional result limit
+	Limit int `json:"limit"`
 }
 
 // Validate validates all fields in InputOnlyInput

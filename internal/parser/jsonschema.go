@@ -42,6 +42,38 @@ func parseJSONSchemaWithStructs(
 	requiredFields []string,
 	schemaType SchemaType,
 ) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	return parseJSONSchemaWithStructsAndFieldOrder(schema, requiredFields, schemaType, nil)
+}
+
+// ParseJSONSchemaWithNestedFieldOrder parses JSON Schema with nested field order preservation.
+func ParseJSONSchemaWithNestedFieldOrder(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+	nestedFieldOrder map[string][]string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	return parseJSONSchemaWithStructsAndFieldOrderAndNested(schema, requiredFields, schemaType, fieldOrder, nestedFieldOrder)
+}
+
+// parseJSONSchemaWithStructsAndFieldOrder parses JSON Schema format with preserved field order.
+func parseJSONSchemaWithStructsAndFieldOrder(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	return parseJSONSchemaWithStructsAndFieldOrderAndNested(schema, requiredFields, schemaType, fieldOrder, nil)
+}
+
+// parseJSONSchemaWithStructsAndFieldOrderAndNested parses JSON Schema format with preserved field order and nested field order.
+func parseJSONSchemaWithStructsAndFieldOrderAndNested(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+	nestedFieldOrder map[string][]string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
 		return nil, nil, nil, errors.New("schema must be an object")
@@ -74,13 +106,36 @@ func parseJSONSchemaWithStructs(
 		}
 	}
 
-	// Collect field names and sort them to ensure consistent ordering
+	// Use preserved field order if available, otherwise fall back to sorted order
 	var fieldNames []string
-	for fieldName := range properties {
-		fieldNames = append(fieldNames, fieldName)
-	}
+	if len(fieldOrder) > 0 {
+		// Use preserved order, but only include fields that exist in schema
+		for _, fieldName := range fieldOrder {
+			if _, exists := properties[fieldName]; exists {
+				fieldNames = append(fieldNames, fieldName)
+			}
+		}
 
-	sort.Strings(fieldNames)
+		// Add any remaining fields not in the preserved order (edge case)
+		for fieldName := range properties {
+			found := false
+			for _, orderedField := range fieldNames {
+				if orderedField == fieldName {
+					found = true
+					break
+				}
+			}
+			if !found {
+				fieldNames = append(fieldNames, fieldName)
+			}
+		}
+	} else {
+		// Fallback to alphabetical sorting for consistency
+		for fieldName := range properties {
+			fieldNames = append(fieldNames, fieldName)
+		}
+		sort.Strings(fieldNames)
+	}
 
 	// Process fields in sorted order
 	for _, fieldName := range fieldNames {
@@ -92,6 +147,7 @@ func parseJSONSchemaWithStructs(
 			requiredSet[fieldName],
 			"",
 			schemaType,
+			nil, // No nested field order for top-level parsing
 		)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("failed to parse field %s: %w", fieldName, err)
@@ -124,6 +180,7 @@ func parseJSONSchemaFieldWithNestedRecursive(
 	isRequired bool,
 	parentStructName string,
 	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
 	fieldDefMap, ok := fieldDef.(map[string]any)
 	if !ok {
@@ -140,7 +197,7 @@ func parseJSONSchemaFieldWithNestedRecursive(
 	case fieldType == "array":
 		return handleArrayField(field, fieldDefMap, isRequired, schemaType)
 	case fieldType == "object":
-		return handleObjectField(field, fieldDefMap, parentStructName, schemaType)
+		return handleObjectField(field, fieldDefMap, parentStructName, schemaType, nestedFieldOrder)
 	default:
 		return handleSimpleField(field, fieldType, isRequired, schemaType)
 	}
@@ -279,6 +336,7 @@ func handleObjectArrayField(
 		itemField,
 		itemsMap,
 		schemaType,
+		nil, // Array items don't have nested field order preservation yet
 	)
 	if err != nil {
 		return field, nil, nil, nil, fmt.Errorf("failed to parse array item object: %w", err)
@@ -296,13 +354,14 @@ func handleObjectField(
 	fieldDefMap map[string]any,
 	parentStructName string,
 	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
 	// Create unique struct name to avoid conflicts in deeply nested structures
 	if parentStructName != "" {
 		field.Name = parentStructName + field.Name
 	}
 
-	return parseJSONSchemaObjectField(field, fieldDefMap, schemaType)
+	return parseJSONSchemaObjectField(field, fieldDefMap, schemaType, nestedFieldOrder)
 }
 
 // handleSimpleField processes simple field types.
@@ -332,6 +391,7 @@ func parseJSONSchemaObjectField(
 	field codegen.GoField,
 	fieldDefMap map[string]any,
 	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
 	// Create struct name from field name
 	structName := field.Name
@@ -368,13 +428,39 @@ func parseJSONSchemaObjectField(
 		requiredSet[reqField] = true
 	}
 
-	// Collect property names and sort them to ensure consistent ordering
+	// Use preserved nested field order if available, otherwise fall back to alphabetical
 	var propNames []string
-	for propName := range properties {
-		propNames = append(propNames, propName)
-	}
 
-	sort.Strings(propNames)
+	// Look for field order using the original field name (JSON tag) as the path
+	fieldOrderForThisStruct := nestedFieldOrder[field.JSONTag]
+	if len(fieldOrderForThisStruct) > 0 {
+		// Use preserved order, but only include fields that exist in properties
+		for _, fieldName := range fieldOrderForThisStruct {
+			if _, exists := properties[fieldName]; exists {
+				propNames = append(propNames, fieldName)
+			}
+		}
+
+		// Add any remaining fields not in the preserved order (edge case)
+		for propName := range properties {
+			found := false
+			for _, orderedField := range propNames {
+				if orderedField == propName {
+					found = true
+					break
+				}
+			}
+			if !found {
+				propNames = append(propNames, propName)
+			}
+		}
+	} else {
+		// Fallback to alphabetical sorting for consistency
+		for propName := range properties {
+			propNames = append(propNames, propName)
+		}
+		sort.Strings(propNames)
+	}
 
 	// Process nested properties in sorted order
 	for _, propName := range propNames {
@@ -386,6 +472,7 @@ func parseJSONSchemaObjectField(
 			requiredSet[propName],
 			structName,
 			schemaType,
+			nestedFieldOrder,
 		)
 		if err != nil {
 			return field, nil, nil, nil, fmt.Errorf(

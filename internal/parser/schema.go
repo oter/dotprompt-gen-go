@@ -21,17 +21,27 @@ func ParseSchemaWithStructs(
 	requiredFields []string,
 	schemaType SchemaType,
 ) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	return ParseSchemaWithStructsAndFieldOrder(schema, requiredFields, schemaType, nil)
+}
+
+// ParseSchemaWithStructsAndFieldOrder parses a schema with preserved field order.
+func ParseSchemaWithStructsAndFieldOrder(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
 	if schema == nil {
 		return nil, nil, nil, nil
 	}
 
 	// Try to detect schema format and parse accordingly
 	if IsPicoschema(schema) {
-		fields, enums, err := parsePicoschema(schema, requiredFields, schemaType)
+		fields, enums, err := parsePicoschemaWithFieldOrder(schema, requiredFields, schemaType, fieldOrder)
 
 		return fields, enums, nil, err // Picoschema doesn't support nested structs yet
 	} else if IsJSONSchema(schema) {
-		return parseJSONSchemaWithStructs(schema, requiredFields, schemaType)
+		return parseJSONSchemaWithStructsAndFieldOrder(schema, requiredFields, schemaType, fieldOrder)
 	}
 
 	return nil, nil, nil, errors.New("unsupported schema format")

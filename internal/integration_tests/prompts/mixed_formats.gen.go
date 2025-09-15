@@ -7,17 +7,17 @@ import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // MixedFormatsInput represents the input for mixed formats
 type MixedFormatsInput struct {
+	UserId      string   `json:"user_id"`
 	Preferences any      `json:"preferences"`
 	Role        RoleEnum `json:"role"`
 	Settings    any      `json:"settings"`
-	UserId      string   `json:"user_id"`
 }
 
 // MixedFormatsOutput represents the output for mixed formats
 type MixedFormatsOutput struct {
+	UserProfile     UserProfile `json:"user_profile"`
 	Recommendations []string    `json:"recommendations"`
 	Success         bool        `json:"success"`
-	UserProfile     UserProfile `json:"user_profile"`
 }
 
 // UserProfile represents

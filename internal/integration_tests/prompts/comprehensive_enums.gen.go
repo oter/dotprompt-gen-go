@@ -7,30 +7,30 @@ import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // ComprehensiveEnumsInput represents the input for comprehensive enums
 type ComprehensiveEnumsInput struct {
-	// Confidence level as integer
-	ConfidenceLevel ConfidenceLevelEnum `json:"confidence_level"`
-	// Complexity level with hyphens
-	Difficulty DifficultyEnum `json:"difficulty"`
-	// Output format preference
-	Format FormatEnum `json:"format"`
-	// Target language code
-	Language LanguageEnum `json:"language"`
 	// Task priority level
 	Priority PriorityEnum `json:"priority"`
 	// Approval status
 	Status StatusEnum `json:"status"`
+	// Complexity level with hyphens
+	Difficulty DifficultyEnum `json:"difficulty"`
+	// Target language code
+	Language LanguageEnum `json:"language"`
+	// Output format preference
+	Format FormatEnum `json:"format"`
+	// Confidence level as integer
+	ConfidenceLevel ConfidenceLevelEnum `json:"confidence_level"`
 }
 
 // ComprehensiveEnumsOutput represents the output for comprehensive enums
 type ComprehensiveEnumsOutput struct {
-	// Error code if processing fails
-	ErrorCode *ErrorCodeEnum `json:"error_code"`
-	// Detailed processing status
-	ProcessingStatus ProcessingStatusEnum `json:"processing_status"`
-	// Output quality score
-	QualityScore QualityScoreEnum `json:"quality_score"`
 	// Processing result
 	Result ResultEnum `json:"result"`
+	// Detailed processing status
+	ProcessingStatus ProcessingStatusEnum `json:"processing_status"`
+	// Error code if processing fails
+	ErrorCode *ErrorCodeEnum `json:"error_code"`
+	// Output quality score
+	QualityScore QualityScoreEnum `json:"quality_score"`
 	// Result urgency level
 	Urgency *UrgencyEnum `json:"urgency"`
 }
@@ -38,12 +38,12 @@ type ComprehensiveEnumsOutput struct {
 // Validate validates all fields in ComprehensiveEnumsInput
 func (s ComprehensiveEnumsInput) Validate() error {
 	fieldValidations := map[string]validator.Validator{
-		"confidence_level": s.ConfidenceLevel,
-		"difficulty":       s.Difficulty,
-		"format":           s.Format,
-		"language":         s.Language,
 		"priority":         s.Priority,
 		"status":           s.Status,
+		"difficulty":       s.Difficulty,
+		"language":         s.Language,
+		"format":           s.Format,
+		"confidence_level": s.ConfidenceLevel,
 	}
 	return validator.ValidateFields(fieldValidations)
 }
@@ -51,97 +51,13 @@ func (s ComprehensiveEnumsInput) Validate() error {
 // Validate validates all fields in ComprehensiveEnumsOutput
 func (s ComprehensiveEnumsOutput) Validate() error {
 	fieldValidations := map[string]validator.Validator{
-		"error_code":        s.ErrorCode,
-		"processing_status": s.ProcessingStatus,
-		"quality_score":     s.QualityScore,
 		"result":            s.Result,
+		"processing_status": s.ProcessingStatus,
+		"error_code":        s.ErrorCode,
+		"quality_score":     s.QualityScore,
 		"urgency":           s.Urgency,
 	}
 	return validator.ValidateFields(fieldValidations)
-}
-
-// ConfidenceLevelEnum represents valid confidence_level values
-type ConfidenceLevelEnum string
-
-const (
-	ConfidenceLevelEnum1 ConfidenceLevelEnum = "1"
-	ConfidenceLevelEnum2 ConfidenceLevelEnum = "2"
-	ConfidenceLevelEnum3 ConfidenceLevelEnum = "3"
-	ConfidenceLevelEnum4 ConfidenceLevelEnum = "4"
-	ConfidenceLevelEnum5 ConfidenceLevelEnum = "5"
-)
-
-// Validate checks if the ConfidenceLevelEnum value is valid
-func (e ConfidenceLevelEnum) Validate() error {
-	switch e {
-	case ConfidenceLevelEnum1, ConfidenceLevelEnum2, ConfidenceLevelEnum3, ConfidenceLevelEnum4, ConfidenceLevelEnum5:
-		return nil
-	default:
-		return fmt.Errorf("invalid ConfidenceLevelEnum value: %q, must be one of: 1, 2, 3, 4, 5", string(e))
-	}
-}
-
-// DifficultyEnum represents valid difficulty values
-type DifficultyEnum string
-
-const (
-	DifficultyEnumVeryEasy DifficultyEnum = "very-easy"
-	DifficultyEnumEasy     DifficultyEnum = "easy"
-	DifficultyEnumMedium   DifficultyEnum = "medium"
-	DifficultyEnumHard     DifficultyEnum = "hard"
-	DifficultyEnumVeryHard DifficultyEnum = "very-hard"
-)
-
-// Validate checks if the DifficultyEnum value is valid
-func (e DifficultyEnum) Validate() error {
-	switch e {
-	case DifficultyEnumVeryEasy, DifficultyEnumEasy, DifficultyEnumMedium, DifficultyEnumHard, DifficultyEnumVeryHard:
-		return nil
-	default:
-		return fmt.Errorf("invalid DifficultyEnum value: %q, must be one of: very-easy, easy, medium, hard, very-hard", string(e))
-	}
-}
-
-// FormatEnum represents valid format values
-type FormatEnum string
-
-const (
-	FormatEnumJson FormatEnum = "json"
-	FormatEnumXml  FormatEnum = "xml"
-	FormatEnumYaml FormatEnum = "yaml"
-	FormatEnumCsv  FormatEnum = "csv"
-)
-
-// Validate checks if the FormatEnum value is valid
-func (e FormatEnum) Validate() error {
-	switch e {
-	case FormatEnumJson, FormatEnumXml, FormatEnumYaml, FormatEnumCsv:
-		return nil
-	default:
-		return fmt.Errorf("invalid FormatEnum value: %q, must be one of: json, xml, yaml, csv", string(e))
-	}
-}
-
-// LanguageEnum represents valid language values
-type LanguageEnum string
-
-const (
-	LanguageEnumEn   LanguageEnum = "en"
-	LanguageEnumEs   LanguageEnum = "es"
-	LanguageEnumFr   LanguageEnum = "fr"
-	LanguageEnumDe   LanguageEnum = "de"
-	LanguageEnumJa   LanguageEnum = "ja"
-	LanguageEnumZhCn LanguageEnum = "zh-cn"
-)
-
-// Validate checks if the LanguageEnum value is valid
-func (e LanguageEnum) Validate() error {
-	switch e {
-	case LanguageEnumEn, LanguageEnumEs, LanguageEnumFr, LanguageEnumDe, LanguageEnumJa, LanguageEnumZhCn:
-		return nil
-	default:
-		return fmt.Errorf("invalid LanguageEnum value: %q, must be one of: en, es, fr, de, ja, zh-cn", string(e))
-	}
 }
 
 // PriorityEnum represents valid priority values
@@ -182,23 +98,106 @@ func (e StatusEnum) Validate() error {
 	}
 }
 
-// ErrorCodeEnum represents valid error_code values
-type ErrorCodeEnum string
+// DifficultyEnum represents valid difficulty values
+type DifficultyEnum string
 
 const (
-	ErrorCodeEnumTimeout      ErrorCodeEnum = "timeout"
-	ErrorCodeEnumInvalidInput ErrorCodeEnum = "invalid_input"
-	ErrorCodeEnumServerError  ErrorCodeEnum = "server_error"
-	ErrorCodeEnumRateLimit    ErrorCodeEnum = "rate_limit"
+	DifficultyEnumVeryEasy DifficultyEnum = "very-easy"
+	DifficultyEnumEasy     DifficultyEnum = "easy"
+	DifficultyEnumMedium   DifficultyEnum = "medium"
+	DifficultyEnumHard     DifficultyEnum = "hard"
+	DifficultyEnumVeryHard DifficultyEnum = "very-hard"
 )
 
-// Validate checks if the ErrorCodeEnum value is valid
-func (e ErrorCodeEnum) Validate() error {
+// Validate checks if the DifficultyEnum value is valid
+func (e DifficultyEnum) Validate() error {
 	switch e {
-	case ErrorCodeEnumTimeout, ErrorCodeEnumInvalidInput, ErrorCodeEnumServerError, ErrorCodeEnumRateLimit:
+	case DifficultyEnumVeryEasy, DifficultyEnumEasy, DifficultyEnumMedium, DifficultyEnumHard, DifficultyEnumVeryHard:
 		return nil
 	default:
-		return fmt.Errorf("invalid ErrorCodeEnum value: %q, must be one of: timeout, invalid_input, server_error, rate_limit", string(e))
+		return fmt.Errorf("invalid DifficultyEnum value: %q, must be one of: very-easy, easy, medium, hard, very-hard", string(e))
+	}
+}
+
+// LanguageEnum represents valid language values
+type LanguageEnum string
+
+const (
+	LanguageEnumEn   LanguageEnum = "en"
+	LanguageEnumEs   LanguageEnum = "es"
+	LanguageEnumFr   LanguageEnum = "fr"
+	LanguageEnumDe   LanguageEnum = "de"
+	LanguageEnumJa   LanguageEnum = "ja"
+	LanguageEnumZhCn LanguageEnum = "zh-cn"
+)
+
+// Validate checks if the LanguageEnum value is valid
+func (e LanguageEnum) Validate() error {
+	switch e {
+	case LanguageEnumEn, LanguageEnumEs, LanguageEnumFr, LanguageEnumDe, LanguageEnumJa, LanguageEnumZhCn:
+		return nil
+	default:
+		return fmt.Errorf("invalid LanguageEnum value: %q, must be one of: en, es, fr, de, ja, zh-cn", string(e))
+	}
+}
+
+// FormatEnum represents valid format values
+type FormatEnum string
+
+const (
+	FormatEnumJson FormatEnum = "json"
+	FormatEnumXml  FormatEnum = "xml"
+	FormatEnumYaml FormatEnum = "yaml"
+	FormatEnumCsv  FormatEnum = "csv"
+)
+
+// Validate checks if the FormatEnum value is valid
+func (e FormatEnum) Validate() error {
+	switch e {
+	case FormatEnumJson, FormatEnumXml, FormatEnumYaml, FormatEnumCsv:
+		return nil
+	default:
+		return fmt.Errorf("invalid FormatEnum value: %q, must be one of: json, xml, yaml, csv", string(e))
+	}
+}
+
+// ConfidenceLevelEnum represents valid confidence_level values
+type ConfidenceLevelEnum string
+
+const (
+	ConfidenceLevelEnum1 ConfidenceLevelEnum = "1"
+	ConfidenceLevelEnum2 ConfidenceLevelEnum = "2"
+	ConfidenceLevelEnum3 ConfidenceLevelEnum = "3"
+	ConfidenceLevelEnum4 ConfidenceLevelEnum = "4"
+	ConfidenceLevelEnum5 ConfidenceLevelEnum = "5"
+)
+
+// Validate checks if the ConfidenceLevelEnum value is valid
+func (e ConfidenceLevelEnum) Validate() error {
+	switch e {
+	case ConfidenceLevelEnum1, ConfidenceLevelEnum2, ConfidenceLevelEnum3, ConfidenceLevelEnum4, ConfidenceLevelEnum5:
+		return nil
+	default:
+		return fmt.Errorf("invalid ConfidenceLevelEnum value: %q, must be one of: 1, 2, 3, 4, 5", string(e))
+	}
+}
+
+// ResultEnum represents valid result values
+type ResultEnum string
+
+const (
+	ResultEnumSuccess ResultEnum = "success"
+	ResultEnumFailure ResultEnum = "failure"
+	ResultEnumRetry   ResultEnum = "retry"
+)
+
+// Validate checks if the ResultEnum value is valid
+func (e ResultEnum) Validate() error {
+	switch e {
+	case ResultEnumSuccess, ResultEnumFailure, ResultEnumRetry:
+		return nil
+	default:
+		return fmt.Errorf("invalid ResultEnum value: %q, must be one of: success, failure, retry", string(e))
 	}
 }
 
@@ -223,6 +222,26 @@ func (e ProcessingStatusEnum) Validate() error {
 	}
 }
 
+// ErrorCodeEnum represents valid error_code values
+type ErrorCodeEnum string
+
+const (
+	ErrorCodeEnumTimeout      ErrorCodeEnum = "timeout"
+	ErrorCodeEnumInvalidInput ErrorCodeEnum = "invalid_input"
+	ErrorCodeEnumServerError  ErrorCodeEnum = "server_error"
+	ErrorCodeEnumRateLimit    ErrorCodeEnum = "rate_limit"
+)
+
+// Validate checks if the ErrorCodeEnum value is valid
+func (e ErrorCodeEnum) Validate() error {
+	switch e {
+	case ErrorCodeEnumTimeout, ErrorCodeEnumInvalidInput, ErrorCodeEnumServerError, ErrorCodeEnumRateLimit:
+		return nil
+	default:
+		return fmt.Errorf("invalid ErrorCodeEnum value: %q, must be one of: timeout, invalid_input, server_error, rate_limit", string(e))
+	}
+}
+
 // QualityScoreEnum represents valid quality_score values
 type QualityScoreEnum string
 
@@ -241,25 +260,6 @@ func (e QualityScoreEnum) Validate() error {
 		return nil
 	default:
 		return fmt.Errorf("invalid QualityScoreEnum value: %q, must be one of: 1, 2, 3, 4, 5", string(e))
-	}
-}
-
-// ResultEnum represents valid result values
-type ResultEnum string
-
-const (
-	ResultEnumSuccess ResultEnum = "success"
-	ResultEnumFailure ResultEnum = "failure"
-	ResultEnumRetry   ResultEnum = "retry"
-)
-
-// Validate checks if the ResultEnum value is valid
-func (e ResultEnum) Validate() error {
-	switch e {
-	case ResultEnumSuccess, ResultEnumFailure, ResultEnumRetry:
-		return nil
-	default:
-		return fmt.Errorf("invalid ResultEnum value: %q, must be one of: success, failure, retry", string(e))
 	}
 }
 

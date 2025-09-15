@@ -180,10 +180,12 @@ func generateFromPromptFile(g codegen.Generator, promptFile *ast.PromptFile) err
 	// Generate request struct if input schema exists
 
 	if promptFile.GetInputSchema() != nil {
-		fields, enums, nestedStructs, err := parser.ParseSchemaWithStructs(
+		fields, enums, nestedStructs, err := parseSchemaWithNestedFieldOrder(
 			promptFile.GetInputSchema(),
 			promptFile.GetRequiredInputFields(),
 			parser.SchemaTypeInput,
+			promptFile.InputFieldOrder,
+			promptFile.InputNestedFieldOrder,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to parse input schema: %w", err)
@@ -216,10 +218,12 @@ func generateFromPromptFile(g codegen.Generator, promptFile *ast.PromptFile) err
 
 	// Generate response struct if output schema exists
 	if promptFile.GetOutputSchema() != nil {
-		fields, enums, nestedStructs, err := parser.ParseSchemaWithStructs(
+		fields, enums, nestedStructs, err := parseSchemaWithNestedFieldOrder(
 			promptFile.GetOutputSchema(),
 			promptFile.GetRequiredOutputFields(),
 			parser.SchemaTypeOutput,
+			promptFile.OutputFieldOrder,
+			promptFile.OutputNestedFieldOrder,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to parse output schema: %w", err)
@@ -276,6 +280,24 @@ func generateFromPromptFile(g codegen.Generator, promptFile *ast.PromptFile) err
 	fmt.Printf("Generated %s\n", outputFile)
 
 	return nil
+}
+
+// parseSchemaWithNestedFieldOrder is a wrapper that calls the appropriate parser with nested field order support.
+func parseSchemaWithNestedFieldOrder(
+	schema any,
+	requiredFields []string,
+	schemaType parser.SchemaType,
+	fieldOrder []string,
+	nestedFieldOrder map[string][]string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	// For now, we only support nested field order for JSON Schema
+	// Picoschema doesn't support nested objects yet
+	if parser.IsJSONSchema(schema) {
+		return parser.ParseJSONSchemaWithNestedFieldOrder(schema, requiredFields, schemaType, fieldOrder, nestedFieldOrder)
+	}
+
+	// Fall back to regular parsing for other schema types
+	return parser.ParseSchemaWithStructsAndFieldOrder(schema, requiredFields, schemaType, fieldOrder)
 }
 
 // getOutputFilePath determines the output file path.
