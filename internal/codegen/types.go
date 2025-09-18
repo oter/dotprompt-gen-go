@@ -1,5 +1,9 @@
 package codegen
 
+import (
+	"sort"
+)
+
 // GoField represents a field in a Go struct.
 type GoField struct {
 	Name       string
@@ -37,9 +41,18 @@ func (f GoField) StructTags() string {
 		tags = append(tags, `json:"`+f.JSONTag+`"`)
 	}
 
-	// Add all extra tags
-	for tagName, tagValue := range f.ExtraTags {
-		tags = append(tags, tagName+`:"`+tagValue+`"`)
+	// Add all extra tags in sorted order for deterministic output
+	if len(f.ExtraTags) > 0 {
+		var tagNames []string
+		for tagName := range f.ExtraTags {
+			tagNames = append(tagNames, tagName)
+		}
+		sort.Strings(tagNames)
+
+		for _, tagName := range tagNames {
+			tagValue := f.ExtraTags[tagName]
+			tags = append(tags, tagName+`:"`+tagValue+`"`)
+		}
 	}
 
 	if len(tags) == 1 {
