@@ -6,13 +6,8 @@ package prompts
 type OutputOnlyOutput struct {
 	// the generated response
 	GeneratedText *string `json:"generated_text"`
-	// optional quality assessment
-	QualityScore *float64 `json:"quality_score"`
 	// number of words generated
 	WordCount *int `json:"word_count"`
-}
-
-// Validate validates all fields in OutputOnlyOutput
-func (s OutputOnlyOutput) Validate() error {
-	return nil
+	// optional quality assessment
+	QualityScore *float64 `json:"quality_score"`
 }

@@ -3,7 +3,6 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // ClassifyHabitsInput represents the input for classify habits
 type ClassifyHabitsInput struct {
@@ -15,43 +14,10 @@ type ClassifyHabitsInput struct {
 type ClassifyHabitsOutput struct {
 	// insightful explanation of why this habit fits the category
 	Explanation string `json:"explanation"`
-	// The developmental stage this habit represents
-	ImpactLevel ImpactLevelEnum `json:"impact_level"`
 	// The transformative category of the habit
 	TransformationCategory TransformationCategoryEnum `json:"transformation_category"`
-}
-
-// Validate validates all fields in ClassifyHabitsInput
-func (s ClassifyHabitsInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in ClassifyHabitsOutput
-func (s ClassifyHabitsOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"impact_level":            s.ImpactLevel,
-		"transformation_category": s.TransformationCategory,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// ImpactLevelEnum represents valid impact_level values
-type ImpactLevelEnum string
-
-const (
-	ImpactLevelEnumFoundational ImpactLevelEnum = "foundational"
-	ImpactLevelEnumGrowth       ImpactLevelEnum = "growth"
-	ImpactLevelEnumMastery      ImpactLevelEnum = "mastery"
-)
-
-// Validate checks if the ImpactLevelEnum value is valid
-func (e ImpactLevelEnum) Validate() error {
-	switch e {
-	case ImpactLevelEnumFoundational, ImpactLevelEnumGrowth, ImpactLevelEnumMastery:
-		return nil
-	default:
-		return fmt.Errorf("invalid ImpactLevelEnum value: %q, must be one of: foundational, growth, mastery", string(e))
-	}
+	// The developmental stage this habit represents
+	ImpactLevel ImpactLevelEnum `json:"impact_level"`
 }
 
 // TransformationCategoryEnum represents valid transformation_category values
@@ -78,5 +44,24 @@ func (e TransformationCategoryEnum) Validate() error {
 		return nil
 	default:
 		return fmt.Errorf("invalid TransformationCategoryEnum value: %q, must be one of: physical_vitality, mental_mastery, creative_expression, social_connection, financial_wisdom, environmental_harmony, spiritual_growth, professional_excellence, learning_adventure, self_care_ritual, mindful_presence", string(e))
+	}
+}
+
+// ImpactLevelEnum represents valid impact_level values
+type ImpactLevelEnum string
+
+const (
+	ImpactLevelEnumFoundational ImpactLevelEnum = "foundational"
+	ImpactLevelEnumGrowth       ImpactLevelEnum = "growth"
+	ImpactLevelEnumMastery      ImpactLevelEnum = "mastery"
+)
+
+// Validate checks if the ImpactLevelEnum value is valid
+func (e ImpactLevelEnum) Validate() error {
+	switch e {
+	case ImpactLevelEnumFoundational, ImpactLevelEnumGrowth, ImpactLevelEnumMastery:
+		return nil
+	default:
+		return fmt.Errorf("invalid ImpactLevelEnum value: %q, must be one of: foundational, growth, mastery", string(e))
 	}
 }

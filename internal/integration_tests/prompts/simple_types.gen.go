@@ -4,34 +4,24 @@ package prompts
 
 // SimpleTypesInput represents the input for simple types
 type SimpleTypesInput struct {
-	// whether user is active
-	Active bool `json:"active"`
+	// the user name
+	Name string `json:"name"`
 	// user age
 	Age int `json:"age"`
 	// user height
 	Height float64 `json:"height"`
+	// whether user is active
+	Active bool `json:"active"`
 	// additional metadata
 	Metadata any `json:"metadata"`
-	// the user name
-	Name string `json:"name"`
 	// optional field
 	OptionalField string `json:"optional_field"`
 }
 
 // SimpleTypesOutput represents the output for simple types
 type SimpleTypesOutput struct {
-	// result message
-	Message *string `json:"message"`
 	// operation success
 	Success *bool `json:"success"`
-}
-
-// Validate validates all fields in SimpleTypesInput
-func (s SimpleTypesInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in SimpleTypesOutput
-func (s SimpleTypesOutput) Validate() error {
-	return nil
+	// result message
+	Message *string `json:"message"`
 }

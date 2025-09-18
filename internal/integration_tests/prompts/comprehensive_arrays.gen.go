@@ -3,26 +3,25 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // ComprehensiveArraysInput represents the input for comprehensive arrays
 type ComprehensiveArraysInput struct {
-	// Array of booleans
-	BooleanList []bool `json:"boolean_list"`
-	// Array of category enums
-	CategoryList []CategoryListItemEnum `json:"category_list"`
+	// Array of strings
+	StringList []string `json:"string_list"`
 	// Array of integers
 	IntegerList []int `json:"integer_list"`
 	// Array of numbers
 	NumberList []float64 `json:"number_list"`
-	// Optional string array
-	OptionalTags []string `json:"optional_tags"`
+	// Array of booleans
+	BooleanList []bool `json:"boolean_list"`
+	// Array of category enums
+	CategoryList []CategoryListItemEnum `json:"category_list"`
 	// Array of priority enums
 	PriorityList []PriorityListItemEnum `json:"priority_list"`
-	// Array of strings
-	StringList []string `json:"string_list"`
 	// Array of user objects
 	UserList []UserListItem `json:"user_list"`
+	// Optional string array
+	OptionalTags []string `json:"optional_tags"`
 }
 
 // UserListItem represents item in user_list array
@@ -34,28 +33,20 @@ type UserListItem struct {
 
 // ComprehensiveArraysOutput represents the output for comprehensive arrays
 type ComprehensiveArraysOutput struct {
-	// Calculated numeric results
-	CalculatedNumbers []float64 `json:"calculated_numbers"`
-	// Enum array in object
-	EnumArrayInObject EnumArrayInObject `json:"enum_array_in_object"`
 	// Processed string results
 	ProcessedStrings []string `json:"processed_strings"`
-	// Processed user objects
-	ProcessedUsers []ProcessedUsersItem `json:"processed_users"`
-	// Selected category enums
-	SelectedCategories []SelectedCategoriesItemEnum `json:"selected_categories"`
+	// Calculated numeric results
+	CalculatedNumbers []float64 `json:"calculated_numbers"`
 	// Status boolean flags
 	StatusFlags []bool `json:"status_flags"`
+	// Selected category enums
+	SelectedCategories []SelectedCategoriesItemEnum `json:"selected_categories"`
+	// Processed user objects
+	ProcessedUsers []ProcessedUsersItem `json:"processed_users"`
+	// Enum array in object
+	EnumArrayInObject EnumArrayInObject `json:"enum_array_in_object"`
 	// Summary integer counts
 	SummaryCounts []int `json:"summary_counts"`
-}
-
-// EnumArrayInObject represents Enum array in object
-type EnumArrayInObject struct {
-	// Enum array in object
-	EnumArray []EnumArrayItemEnum `json:"enum_array"`
-	// String field
-	StringField *string `json:"string_field"`
 }
 
 // ProcessedUsersItem represents item in processed_users array
@@ -64,35 +55,12 @@ type ProcessedUsersItem struct {
 	UserStatus *UserStatusEnum `json:"user_status"`
 }
 
-// Validate validates all fields in ComprehensiveArraysInput
-func (s ComprehensiveArraysInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in UserListItem
-func (s UserListItem) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in ComprehensiveArraysOutput
-func (s ComprehensiveArraysOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"enum_array_in_object": s.EnumArrayInObject,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in EnumArrayInObject
-func (s EnumArrayInObject) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in ProcessedUsersItem
-func (s ProcessedUsersItem) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"user_status": s.UserStatus,
-	}
-	return validator.ValidateFields(fieldValidations)
+// EnumArrayInObject represents Enum array in object
+type EnumArrayInObject struct {
+	// Enum array in object
+	EnumArray []EnumArrayItemEnum `json:"enum_array"`
+	// String field
+	StringField *string `json:"string_field"`
 }
 
 // CategoryListItemEnum represents valid category_list item values
@@ -135,22 +103,23 @@ func (e PriorityListItemEnum) Validate() error {
 	}
 }
 
-// EnumArrayItemEnum represents valid enum_array item values
-type EnumArrayItemEnum string
+// SelectedCategoriesItemEnum represents valid selected_categories item values
+type SelectedCategoriesItemEnum string
 
 const (
-	EnumArrayItemEnumActive    EnumArrayItemEnum = "active"
-	EnumArrayItemEnumInactive  EnumArrayItemEnum = "inactive"
-	EnumArrayItemEnumSuspended EnumArrayItemEnum = "suspended"
+	SelectedCategoriesItemEnumTech      SelectedCategoriesItemEnum = "tech"
+	SelectedCategoriesItemEnumFinance   SelectedCategoriesItemEnum = "finance"
+	SelectedCategoriesItemEnumHealth    SelectedCategoriesItemEnum = "health"
+	SelectedCategoriesItemEnumEducation SelectedCategoriesItemEnum = "education"
 )
 
-// Validate checks if the EnumArrayItemEnum value is valid
-func (e EnumArrayItemEnum) Validate() error {
+// Validate checks if the SelectedCategoriesItemEnum value is valid
+func (e SelectedCategoriesItemEnum) Validate() error {
 	switch e {
-	case EnumArrayItemEnumActive, EnumArrayItemEnumInactive, EnumArrayItemEnumSuspended:
+	case SelectedCategoriesItemEnumTech, SelectedCategoriesItemEnumFinance, SelectedCategoriesItemEnumHealth, SelectedCategoriesItemEnumEducation:
 		return nil
 	default:
-		return fmt.Errorf("invalid EnumArrayItemEnum value: %q, must be one of: active, inactive, suspended", string(e))
+		return fmt.Errorf("invalid SelectedCategoriesItemEnum value: %q, must be one of: tech, finance, health, education", string(e))
 	}
 }
 
@@ -173,22 +142,21 @@ func (e UserStatusEnum) Validate() error {
 	}
 }
 
-// SelectedCategoriesItemEnum represents valid selected_categories item values
-type SelectedCategoriesItemEnum string
+// EnumArrayItemEnum represents valid enum_array item values
+type EnumArrayItemEnum string
 
 const (
-	SelectedCategoriesItemEnumTech      SelectedCategoriesItemEnum = "tech"
-	SelectedCategoriesItemEnumFinance   SelectedCategoriesItemEnum = "finance"
-	SelectedCategoriesItemEnumHealth    SelectedCategoriesItemEnum = "health"
-	SelectedCategoriesItemEnumEducation SelectedCategoriesItemEnum = "education"
+	EnumArrayItemEnumActive    EnumArrayItemEnum = "active"
+	EnumArrayItemEnumInactive  EnumArrayItemEnum = "inactive"
+	EnumArrayItemEnumSuspended EnumArrayItemEnum = "suspended"
 )
 
-// Validate checks if the SelectedCategoriesItemEnum value is valid
-func (e SelectedCategoriesItemEnum) Validate() error {
+// Validate checks if the EnumArrayItemEnum value is valid
+func (e EnumArrayItemEnum) Validate() error {
 	switch e {
-	case SelectedCategoriesItemEnumTech, SelectedCategoriesItemEnumFinance, SelectedCategoriesItemEnumHealth, SelectedCategoriesItemEnumEducation:
+	case EnumArrayItemEnumActive, EnumArrayItemEnumInactive, EnumArrayItemEnumSuspended:
 		return nil
 	default:
-		return fmt.Errorf("invalid SelectedCategoriesItemEnum value: %q, must be one of: tech, finance, health, education", string(e))
+		return fmt.Errorf("invalid EnumArrayItemEnum value: %q, must be one of: active, inactive, suspended", string(e))
 	}
 }

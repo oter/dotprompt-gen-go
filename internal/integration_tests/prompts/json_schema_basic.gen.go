@@ -3,7 +3,6 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // JsonSchemaBasicInput represents the input for json schema basic
 type JsonSchemaBasicInput struct {
@@ -17,25 +16,12 @@ type JsonSchemaBasicInput struct {
 
 // JsonSchemaBasicOutput represents the output for json schema basic
 type JsonSchemaBasicOutput struct {
-	// Confidence score
-	Confidence *float64 `json:"confidence"`
 	// Generated summary
 	Summary string `json:"summary"`
+	// Confidence score
+	Confidence *float64 `json:"confidence"`
 	// Whether the input is valid
 	Valid bool `json:"valid"`
-}
-
-// Validate validates all fields in JsonSchemaBasicInput
-func (s JsonSchemaBasicInput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"habit_category": s.HabitCategory,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in JsonSchemaBasicOutput
-func (s JsonSchemaBasicOutput) Validate() error {
-	return nil
 }
 
 // HabitCategoryEnum represents valid habit_category values

@@ -36,11 +36,34 @@ func IsJSONSchema(schema any) bool {
 	return hasType || hasProperties
 }
 
-// parseJSONSchemaWithStructs parses JSON Schema format and returns nested structs.
-func parseJSONSchemaWithStructs(
+// ParseJSONSchemaWithNestedFieldOrder parses JSON Schema with nested field order preservation.
+func ParseJSONSchemaWithNestedFieldOrder(
 	schema any,
 	requiredFields []string,
 	schemaType SchemaType,
+	fieldOrder []string,
+	nestedFieldOrder map[string][]string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	return parseJSONSchemaWithStructsAndFieldOrderAndNested(schema, requiredFields, schemaType, fieldOrder, nestedFieldOrder)
+}
+
+// parseJSONSchemaWithStructsAndFieldOrder parses JSON Schema format with preserved field order.
+func parseJSONSchemaWithStructsAndFieldOrder(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
+	return parseJSONSchemaWithStructsAndFieldOrderAndNested(schema, requiredFields, schemaType, fieldOrder, nil)
+}
+
+// parseJSONSchemaWithStructsAndFieldOrderAndNested parses JSON Schema format with preserved field order and nested field order.
+func parseJSONSchemaWithStructsAndFieldOrderAndNested(
+	schema any,
+	requiredFields []string,
+	schemaType SchemaType,
+	fieldOrder []string,
+	nestedFieldOrder map[string][]string,
 ) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
@@ -53,34 +76,15 @@ func parseJSONSchemaWithStructs(
 		allStructs []codegen.GoStruct
 	)
 
-	requiredSet := make(map[string]bool)
-
 	// Handle properties first to get field names for input schema logic
 	properties, ok := schemaMap["properties"].(map[string]any)
 	if !ok {
 		return nil, nil, nil, errors.New("JSON schema must have properties")
 	}
 
-	// For input schemas, ignore the required fields list and treat all fields as required
-	if schemaType == SchemaTypeInput {
-		// All fields are treated as required for input schemas
-		for fieldName := range properties {
-			requiredSet[fieldName] = true
-		}
-	} else {
-		// For output schemas, use the provided required fields list
-		for _, field := range requiredFields {
-			requiredSet[field] = true
-		}
-	}
-
-	// Collect field names and sort them to ensure consistent ordering
-	var fieldNames []string
-	for fieldName := range properties {
-		fieldNames = append(fieldNames, fieldName)
-	}
-
-	sort.Strings(fieldNames)
+	// Build required fields set and ordered field names using shared functions
+	requiredSet := buildRequiredFieldsSet(properties, requiredFields, schemaType)
+	fieldNames := buildOrderedFieldNames(properties, fieldOrder)
 
 	// Process fields in sorted order
 	for _, fieldName := range fieldNames {
@@ -92,6 +96,7 @@ func parseJSONSchemaWithStructs(
 			requiredSet[fieldName],
 			"",
 			schemaType,
+			nestedFieldOrder,
 		)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("failed to parse field %s: %w", fieldName, err)
@@ -124,6 +129,7 @@ func parseJSONSchemaFieldWithNestedRecursive(
 	isRequired bool,
 	parentStructName string,
 	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
 	fieldDefMap, ok := fieldDef.(map[string]any)
 	if !ok {
@@ -140,7 +146,7 @@ func parseJSONSchemaFieldWithNestedRecursive(
 	case fieldType == "array":
 		return handleArrayField(field, fieldDefMap, isRequired, schemaType)
 	case fieldType == "object":
-		return handleObjectField(field, fieldDefMap, parentStructName, schemaType)
+		return handleObjectField(field, fieldDefMap, parentStructName, schemaType, nestedFieldOrder)
 	default:
 		return handleSimpleField(field, fieldType, isRequired, schemaType)
 	}
@@ -149,13 +155,23 @@ func parseJSONSchemaFieldWithNestedRecursive(
 // createBaseField creates a base GoField with common properties.
 func createBaseField(fieldName string, _ bool, fieldDefMap map[string]any) codegen.GoField {
 	field := codegen.GoField{
-		Name:    naming.SchemaFieldToGoField(fieldName),
-		JSONTag: fieldName,
+		Name:      naming.SchemaFieldToGoField(fieldName),
+		JSONTag:   fieldName,
+		ExtraTags: make(map[string]string),
 	}
 
 	// Get description
 	if desc, ok := fieldDefMap["description"].(string); ok {
 		field.Comment = desc
+	}
+
+	// Parse x-codegen-extra-tags extension
+	if extraTags, ok := fieldDefMap["x-codegen-extra-tags"].(map[string]any); ok {
+		for tagName, tagValue := range extraTags {
+			if tagValueStr, ok := tagValue.(string); ok {
+				field.ExtraTags[tagName] = tagValueStr
+			}
+		}
 	}
 
 	return field
@@ -279,6 +295,7 @@ func handleObjectArrayField(
 		itemField,
 		itemsMap,
 		schemaType,
+		nil, // Array items don't have nested field order preservation yet
 	)
 	if err != nil {
 		return field, nil, nil, nil, fmt.Errorf("failed to parse array item object: %w", err)
@@ -296,13 +313,14 @@ func handleObjectField(
 	fieldDefMap map[string]any,
 	parentStructName string,
 	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
 	// Create unique struct name to avoid conflicts in deeply nested structures
 	if parentStructName != "" {
 		field.Name = parentStructName + field.Name
 	}
 
-	return parseJSONSchemaObjectField(field, fieldDefMap, schemaType)
+	return parseJSONSchemaObjectField(field, fieldDefMap, schemaType, nestedFieldOrder)
 }
 
 // handleSimpleField processes simple field types.
@@ -332,20 +350,35 @@ func parseJSONSchemaObjectField(
 	field codegen.GoField,
 	fieldDefMap map[string]any,
 	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
 ) (codegen.GoField, []codegen.GoEnum, *codegen.GoStruct, []codegen.GoStruct, error) {
-	// Create struct name from field name
 	structName := field.Name
 
-	// Parse the properties of the nested object
 	properties, ok := fieldDefMap["properties"].(map[string]any)
 	if !ok {
-		// If no properties defined, fall back to map[string]any
 		field.GoType = "map[string]any"
 
 		return field, nil, nil, nil, nil
 	}
 
-	// Get required fields for this nested object
+	requiredFields := extractRequiredFields(fieldDefMap)
+	propNames := getOrderedPropertyNames(properties, field.JSONTag, nestedFieldOrder)
+
+	nestedFields, allEnums, allDeeplyNestedStructs, err := processNestedProperties(
+		properties, propNames, requiredFields, structName, schemaType, nestedFieldOrder,
+	)
+	if err != nil {
+		return field, nil, nil, nil, err
+	}
+
+	nestedStruct := createNestedStruct(structName, field.Comment, nestedFields)
+	field = updateFieldForStruct(field, structName)
+
+	return field, allEnums, nestedStruct, allDeeplyNestedStructs, nil
+}
+
+// extractRequiredFields extracts required field names from field definition map.
+func extractRequiredFields(fieldDefMap map[string]any) []string {
 	var requiredFields []string
 
 	if required, ok := fieldDefMap["required"].([]any); ok {
@@ -356,7 +389,72 @@ func parseJSONSchemaObjectField(
 		}
 	}
 
-	// Parse nested properties and collect all deeply nested structs and enums
+	return requiredFields
+}
+
+// getOrderedPropertyNames returns property names in the correct order.
+func getOrderedPropertyNames(
+	properties map[string]any,
+	fieldJSONTag string,
+	nestedFieldOrder map[string][]string,
+) []string {
+	fieldOrderForThisStruct := nestedFieldOrder[fieldJSONTag]
+	if len(fieldOrderForThisStruct) > 0 {
+		return getPreservedOrderPropertyNames(properties, fieldOrderForThisStruct)
+	}
+
+	return getAlphabeticalPropertyNames(properties)
+}
+
+// getPreservedOrderPropertyNames returns property names using preserved field order.
+func getPreservedOrderPropertyNames(properties map[string]any, fieldOrder []string) []string {
+	var propNames []string
+
+	// Use preserved order, but only include fields that exist in properties
+	for _, fieldName := range fieldOrder {
+		if _, exists := properties[fieldName]; exists {
+			propNames = append(propNames, fieldName)
+		}
+	}
+
+	// Add any remaining fields not in the preserved order (edge case)
+	for propName := range properties {
+		found := false
+		for _, orderedField := range propNames {
+			if orderedField == propName {
+				found = true
+
+				break
+			}
+		}
+		if !found {
+			propNames = append(propNames, propName)
+		}
+	}
+
+	return propNames
+}
+
+// getAlphabeticalPropertyNames returns property names in alphabetical order.
+func getAlphabeticalPropertyNames(properties map[string]any) []string {
+	var propNames []string
+	for propName := range properties {
+		propNames = append(propNames, propName)
+	}
+	sort.Strings(propNames)
+
+	return propNames
+}
+
+// processNestedProperties processes all nested properties and returns collected data.
+func processNestedProperties(
+	properties map[string]any,
+	propNames []string,
+	requiredFields []string,
+	structName string,
+	schemaType SchemaType,
+	nestedFieldOrder map[string][]string,
+) ([]codegen.GoField, []codegen.GoEnum, []codegen.GoStruct, error) {
 	var (
 		nestedFields           []codegen.GoField
 		allEnums               []codegen.GoEnum
@@ -368,15 +466,6 @@ func parseJSONSchemaObjectField(
 		requiredSet[reqField] = true
 	}
 
-	// Collect property names and sort them to ensure consistent ordering
-	var propNames []string
-	for propName := range properties {
-		propNames = append(propNames, propName)
-	}
-
-	sort.Strings(propNames)
-
-	// Process nested properties in sorted order
 	for _, propName := range propNames {
 		propDef := properties[propName]
 
@@ -386,44 +475,40 @@ func parseJSONSchemaObjectField(
 			requiredSet[propName],
 			structName,
 			schemaType,
+			nestedFieldOrder,
 		)
 		if err != nil {
-			return field, nil, nil, nil, fmt.Errorf(
-				"failed to parse nested field %s: %w",
-				propName,
-				err,
-			)
+			return nil, nil, nil, fmt.Errorf("failed to parse nested field %s: %w", propName, err)
 		}
 
 		nestedFields = append(nestedFields, nestedField)
-
-		// Collect all enums (direct and deeply nested)
-		if len(allNestedEnums) > 0 {
-			allEnums = append(allEnums, allNestedEnums...)
-		}
+		allEnums = append(allEnums, allNestedEnums...)
 
 		if directNestedStruct != nil {
 			allDeeplyNestedStructs = append(allDeeplyNestedStructs, *directNestedStruct)
 		}
-		// Collect all deeply nested structs recursively
-		if len(deeplyNestedStructs) > 0 {
-			allDeeplyNestedStructs = append(allDeeplyNestedStructs, deeplyNestedStructs...)
-		}
+		allDeeplyNestedStructs = append(allDeeplyNestedStructs, deeplyNestedStructs...)
 	}
 
-	// Create the nested struct
-	nestedStruct := &codegen.GoStruct{
+	return nestedFields, allEnums, allDeeplyNestedStructs, nil
+}
+
+// createNestedStruct creates a new nested struct with the given parameters.
+func createNestedStruct(structName, comment string, fields []codegen.GoField) *codegen.GoStruct {
+	return &codegen.GoStruct{
 		Name:     structName,
-		Comments: []string{fmt.Sprintf("%s represents %s", structName, field.Comment)},
-		Fields:   nestedFields,
+		Comments: []string{fmt.Sprintf("%s represents %s", structName, comment)},
+		Fields:   fields,
 	}
+}
 
-	// Update field to reference the new struct type
+// updateFieldForStruct updates the field to reference the struct type.
+func updateFieldForStruct(field codegen.GoField, structName string) codegen.GoField {
 	field.GoType = structName
 	field.IsObject = true
 	field.IsPointer = strings.HasPrefix(field.GoType, "*")
 
-	return field, allEnums, nestedStruct, allDeeplyNestedStructs, nil
+	return field
 }
 
 // parseJSONSchemaEnum parses enum definition in JSON Schema.

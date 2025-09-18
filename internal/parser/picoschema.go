@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/oter/dotprompt-gen-go/internal/codegen"
@@ -43,11 +42,12 @@ func IsPicoschema(schema any) bool {
 	return !hasType && !hasProperties
 }
 
-// parsePicoschema parses Picoschema format.
-func parsePicoschema(
+// parsePicoschemaWithFieldOrder parses Picoschema format with preserved field order.
+func parsePicoschemaWithFieldOrder(
 	schema any,
 	requiredFields []string,
 	schemaType SchemaType,
+	fieldOrder []string,
 ) ([]codegen.GoField, []codegen.GoEnum, error) {
 	schemaMap, ok := schema.(map[string]any)
 	if !ok {
@@ -59,28 +59,9 @@ func parsePicoschema(
 		enums  []codegen.GoEnum
 	)
 
-	requiredSet := make(map[string]bool)
-
-	// For input schemas, ignore the required fields list and treat all fields as required
-	if schemaType == SchemaTypeInput {
-		// All fields are treated as required for input schemas
-		for fieldName := range schemaMap {
-			requiredSet[fieldName] = true
-		}
-	} else {
-		// For output schemas, use the provided required fields list
-		for _, field := range requiredFields {
-			requiredSet[field] = true
-		}
-	}
-
-	// Collect field names and sort them to ensure consistent ordering
-	var fieldNames []string
-	for fieldName := range schemaMap {
-		fieldNames = append(fieldNames, fieldName)
-	}
-
-	sort.Strings(fieldNames)
+	// Build required fields set and ordered field names using shared functions
+	requiredSet := buildRequiredFieldsSet(schemaMap, requiredFields, schemaType)
+	fieldNames := buildOrderedFieldNames(schemaMap, fieldOrder)
 
 	// Process fields in sorted order
 	for _, fieldName := range fieldNames {
@@ -138,8 +119,9 @@ func parsePicoschemaField(
 // createBasePicoschemaField creates the base field structure.
 func createBasePicoschemaField(fieldName string) codegen.GoField {
 	field := codegen.GoField{
-		Name:    naming.SchemaFieldToGoField(fieldName),
-		JSONTag: fieldName,
+		Name:      naming.SchemaFieldToGoField(fieldName),
+		JSONTag:   fieldName,
+		ExtraTags: make(map[string]string),
 	}
 
 	// Check for optional field marker

@@ -22,7 +22,7 @@ func BenchmarkParsePicoschema(b *testing.B) {
 	requiredFields := []string{"name", "email", "active"}
 
 	for b.Loop() {
-		_, _, err := parsePicoschema(picoSchema, requiredFields, SchemaTypeOutput)
+		_, _, err := parsePicoschemaWithFieldOrder(picoSchema, requiredFields, SchemaTypeOutput, nil)
 		if err != nil {
 			b.Fatalf("Failed to parse schema: %v", err)
 		}
@@ -69,7 +69,7 @@ func BenchmarkParseJSONSchema(b *testing.B) {
 	requiredFields := []string{"name", "email", "active"}
 
 	for b.Loop() {
-		_, _, _, err := parseJSONSchemaWithStructs(jsonSchema, requiredFields, SchemaTypeOutput)
+		_, _, _, err := parseJSONSchemaWithStructsAndFieldOrder(jsonSchema, requiredFields, SchemaTypeOutput, nil)
 		if err != nil {
 			b.Fatalf("Failed to parse schema: %v", err)
 		}
@@ -119,7 +119,7 @@ func BenchmarkDeeplyNestedJSONSchema(b *testing.B) {
 	requiredFields := []string{"level1"}
 
 	for b.Loop() {
-		_, _, _, err := parseJSONSchemaWithStructs(deepSchema, requiredFields, SchemaTypeOutput)
+		_, _, _, err := parseJSONSchemaWithStructsAndFieldOrder(deepSchema, requiredFields, SchemaTypeOutput, nil)
 		if err != nil {
 			b.Fatalf("Failed to parse deeply nested schema: %v", err)
 		}

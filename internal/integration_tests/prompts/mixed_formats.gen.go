@@ -3,51 +3,26 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // MixedFormatsInput represents the input for mixed formats
 type MixedFormatsInput struct {
+	UserId      string   `json:"user_id"`
 	Preferences any      `json:"preferences"`
 	Role        RoleEnum `json:"role"`
 	Settings    any      `json:"settings"`
-	UserId      string   `json:"user_id"`
 }
 
 // MixedFormatsOutput represents the output for mixed formats
 type MixedFormatsOutput struct {
+	UserProfile     UserProfile `json:"user_profile"`
 	Recommendations []string    `json:"recommendations"`
 	Success         bool        `json:"success"`
-	UserProfile     UserProfile `json:"user_profile"`
 }
 
 // UserProfile represents
 type UserProfile struct {
 	Id       *string       `json:"id"`
 	UserRole *UserRoleEnum `json:"user_role"`
-}
-
-// Validate validates all fields in MixedFormatsInput
-func (s MixedFormatsInput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"role": s.Role,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in MixedFormatsOutput
-func (s MixedFormatsOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"user_profile": s.UserProfile,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in UserProfile
-func (s UserProfile) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"user_role": s.UserRole,
-	}
-	return validator.ValidateFields(fieldValidations)
 }
 
 // RoleEnum represents valid role values
