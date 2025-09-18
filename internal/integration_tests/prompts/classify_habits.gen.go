@@ -3,7 +3,6 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // ClassifyHabitsInput represents the input for classify habits
 type ClassifyHabitsInput struct {
@@ -19,20 +18,6 @@ type ClassifyHabitsOutput struct {
 	TransformationCategory TransformationCategoryEnum `json:"transformation_category"`
 	// The developmental stage this habit represents
 	ImpactLevel ImpactLevelEnum `json:"impact_level"`
-}
-
-// Validate validates all fields in ClassifyHabitsInput
-func (s ClassifyHabitsInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in ClassifyHabitsOutput
-func (s ClassifyHabitsOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"transformation_category": s.TransformationCategory,
-		"impact_level":            s.ImpactLevel,
-	}
-	return validator.ValidateFields(fieldValidations)
 }
 
 // TransformationCategoryEnum represents valid transformation_category values

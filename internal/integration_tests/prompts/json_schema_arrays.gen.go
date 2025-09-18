@@ -17,13 +17,3 @@ type JsonSchemaArraysOutput struct {
 	// Average of all ratings
 	AverageRating *float64 `json:"average_rating"`
 }
-
-// Validate validates all fields in JsonSchemaArraysInput
-func (s JsonSchemaArraysInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in JsonSchemaArraysOutput
-func (s JsonSchemaArraysOutput) Validate() error {
-	return nil
-}

@@ -3,7 +3,6 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // ComprehensiveEnumsInput represents the input for comprehensive enums
 type ComprehensiveEnumsInput struct {
@@ -33,31 +32,6 @@ type ComprehensiveEnumsOutput struct {
 	QualityScore QualityScoreEnum `json:"quality_score"`
 	// Result urgency level
 	Urgency *UrgencyEnum `json:"urgency"`
-}
-
-// Validate validates all fields in ComprehensiveEnumsInput
-func (s ComprehensiveEnumsInput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"priority":         s.Priority,
-		"status":           s.Status,
-		"difficulty":       s.Difficulty,
-		"language":         s.Language,
-		"format":           s.Format,
-		"confidence_level": s.ConfidenceLevel,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in ComprehensiveEnumsOutput
-func (s ComprehensiveEnumsOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"result":            s.Result,
-		"processing_status": s.ProcessingStatus,
-		"error_code":        s.ErrorCode,
-		"quality_score":     s.QualityScore,
-		"urgency":           s.Urgency,
-	}
-	return validator.ValidateFields(fieldValidations)
 }
 
 // PriorityEnum represents valid priority values

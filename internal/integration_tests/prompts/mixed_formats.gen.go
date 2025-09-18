@@ -3,7 +3,6 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // MixedFormatsInput represents the input for mixed formats
 type MixedFormatsInput struct {
@@ -24,30 +23,6 @@ type MixedFormatsOutput struct {
 type UserProfile struct {
 	Id       *string       `json:"id"`
 	UserRole *UserRoleEnum `json:"user_role"`
-}
-
-// Validate validates all fields in MixedFormatsInput
-func (s MixedFormatsInput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"role": s.Role,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in MixedFormatsOutput
-func (s MixedFormatsOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"user_profile": s.UserProfile,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in UserProfile
-func (s UserProfile) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"user_role": s.UserRole,
-	}
-	return validator.ValidateFields(fieldValidations)
 }
 
 // RoleEnum represents valid role values

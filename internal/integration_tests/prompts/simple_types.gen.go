@@ -25,13 +25,3 @@ type SimpleTypesOutput struct {
 	// result message
 	Message *string `json:"message"`
 }
-
-// Validate validates all fields in SimpleTypesInput
-func (s SimpleTypesInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in SimpleTypesOutput
-func (s SimpleTypesOutput) Validate() error {
-	return nil
-}

@@ -1,0 +1,60 @@
+---
+model: gpt-4o-mini
+input:
+  schema:
+    type: object
+    properties:
+      user_name:
+        type: string
+        description: "Username for the account"
+        x-codegen-extra-tags:
+          validate: "required,min=3,max=50"
+      email:
+        type: string  
+        description: "User email address"
+        x-codegen-extra-tags:
+          validate: "required,email"
+      age:
+        type: integer
+        description: "User age"
+        x-codegen-extra-tags:
+          validate: "required,min=18,max=120"
+      bio:
+        type: string
+        description: "Optional user biography"
+        x-codegen-extra-tags:
+          validate: "max=500"
+      preferences:
+        type: object
+        properties:
+          theme:
+            type: string
+            description: "UI theme preference"
+            x-codegen-extra-tags:
+              validate: "oneof=light dark auto"
+          notifications:
+            type: boolean
+            description: "Enable notifications"
+output:
+  schema:
+    type: object
+    properties:
+      user_id:
+        type: string
+        description: "Generated user ID"
+        x-codegen-extra-tags:
+          validate: "required,uuid4"
+      status:
+        type: string
+        enum: ["active", "pending", "suspended"]
+        description: "Account status"
+      created_at:
+        type: string
+        description: "Account creation timestamp"
+        x-codegen-extra-tags:
+          validate: "required"
+          db: "created_at"
+          json: "created_at,omitempty"
+---
+
+Create a new user account with validation.

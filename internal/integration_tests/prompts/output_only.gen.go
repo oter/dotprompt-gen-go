@@ -11,8 +11,3 @@ type OutputOnlyOutput struct {
 	// optional quality assessment
 	QualityScore *float64 `json:"quality_score"`
 }
-
-// Validate validates all fields in OutputOnlyOutput
-func (s OutputOnlyOutput) Validate() error {
-	return nil
-}

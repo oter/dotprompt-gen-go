@@ -3,7 +3,6 @@
 package prompts
 
 import "fmt"
-import "github.com/oter/dotprompt-gen-go/pkg/validator"
 
 // ComprehensiveArraysInput represents the input for comprehensive arrays
 type ComprehensiveArraysInput struct {
@@ -62,37 +61,6 @@ type EnumArrayInObject struct {
 	EnumArray []EnumArrayItemEnum `json:"enum_array"`
 	// String field
 	StringField *string `json:"string_field"`
-}
-
-// Validate validates all fields in ComprehensiveArraysInput
-func (s ComprehensiveArraysInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in UserListItem
-func (s UserListItem) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in ComprehensiveArraysOutput
-func (s ComprehensiveArraysOutput) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"enum_array_in_object": s.EnumArrayInObject,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in ProcessedUsersItem
-func (s ProcessedUsersItem) Validate() error {
-	fieldValidations := map[string]validator.Validator{
-		"user_status": s.UserStatus,
-	}
-	return validator.ValidateFields(fieldValidations)
-}
-
-// Validate validates all fields in EnumArrayInObject
-func (s EnumArrayInObject) Validate() error {
-	return nil
 }
 
 // CategoryListItemEnum represents valid category_list item values

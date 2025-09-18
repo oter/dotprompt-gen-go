@@ -9,8 +9,3 @@ type InputOnlyInput struct {
 	// optional result limit
 	Limit int `json:"limit"`
 }
-
-// Validate validates all fields in InputOnlyInput
-func (s InputOnlyInput) Validate() error {
-	return nil
-}

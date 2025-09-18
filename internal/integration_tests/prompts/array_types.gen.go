@@ -19,13 +19,3 @@ type ArrayTypesOutput struct {
 	// Result counts
 	Counts []int `json:"counts"`
 }
-
-// Validate validates all fields in ArrayTypesInput
-func (s ArrayTypesInput) Validate() error {
-	return nil
-}
-
-// Validate validates all fields in ArrayTypesOutput
-func (s ArrayTypesOutput) Validate() error {
-	return nil
-}

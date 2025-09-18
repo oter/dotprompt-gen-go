@@ -29,18 +29,7 @@ package {{.Package}}
 {{range .Comments}}// {{.}}
 {{end}}{{if .Fields}}type {{.Name}} struct {
 {{range .Fields}}{{if .Comment}}	// {{.Comment}}
-{{end}}	{{.Name}} {{.GoType}} ` + "`json:\"{{.JSONTag}}\"`" + `
-{{end}}}
-{{end}}
-{{end}}
-{{range .Structs}}{{if .NeedsValidation}}
-// Validate validates all fields in {{.Name}}
-func (s {{.Name}}) Validate() error {
-{{if .HasValidationFields}}	fieldValidations := map[string]validator.Validator{
-{{range .Fields}}{{if .NeedsValidation}}		"{{.JSONTag}}": s.{{.Name}},
-{{end}}{{end}}	}
-	return validator.ValidateFields(fieldValidations)
-{{else}}	return nil
+{{end}}	{{.Name}} {{.GoType}} ` + "`{{.StructTags}}`" + `
 {{end}}}
 {{end}}
 {{end}}
@@ -74,25 +63,10 @@ func GenerateGoCode(
 
 	// Determine required imports
 	var imports []string
-	// Note: validation tags don't require importing validator package
-	// They are just struct tag metadata that can be used by validation libraries
 
 	// Add fmt import if we have enums (needed for validation error messages)
 	if len(enums) > 0 {
 		imports = append(imports, "fmt")
-	}
-
-	// Add validator import if we have actual validation calls (not just empty Validate() methods)
-	hasValidationCalls := false
-	for _, s := range structs {
-		if s.NeedsValidation() && s.HasValidationFields() {
-			hasValidationCalls = true
-
-			break
-		}
-	}
-	if hasValidationCalls {
-		imports = append(imports, "github.com/oter/dotprompt-gen-go/pkg/validator")
 	}
 
 	templateData := codegen.TemplateData{
@@ -177,82 +151,14 @@ func generateFromPromptFile(g codegen.Generator, promptFile *ast.PromptFile) err
 		allEnums []codegen.GoEnum
 	)
 
-	// Generate request struct if input schema exists
-
-	if promptFile.GetInputSchema() != nil {
-		fields, enums, nestedStructs, err := parseSchemaWithNestedFieldOrder(
-			promptFile.GetInputSchema(),
-			promptFile.GetRequiredInputFields(),
-			parser.SchemaTypeInput,
-			promptFile.InputFieldOrder,
-			promptFile.InputNestedFieldOrder,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to parse input schema: %w", err)
-		}
-
-		if len(fields) > 0 {
-			structs = append(structs, codegen.GoStruct{
-				Name: requestName,
-				Comments: []string{
-					fmt.Sprintf(
-						"%s represents the input for %s",
-						requestName,
-						getPromptDescription(promptFile),
-					),
-				},
-				Fields:   fields,
-				IsInput:  true,
-				IsOutput: false,
-			})
-		}
-
-		// Add nested structs from schema parsing with validation
-		for _, nestedStruct := range nestedStructs {
-			nestedStruct.IsInput = false
-			nestedStruct.IsOutput = false // Nested structs are neither input nor output, but can still have validation
-			structs = append(structs, nestedStruct)
-		}
-		allEnums = append(allEnums, enums...)
+	// Generate input struct if schema exists
+	if err := generateInputStruct(promptFile, requestName, &structs, &allEnums); err != nil {
+		return fmt.Errorf("failed to generate input struct: %w", err)
 	}
 
-	// Generate response struct if output schema exists
-	if promptFile.GetOutputSchema() != nil {
-		fields, enums, nestedStructs, err := parseSchemaWithNestedFieldOrder(
-			promptFile.GetOutputSchema(),
-			promptFile.GetRequiredOutputFields(),
-			parser.SchemaTypeOutput,
-			promptFile.OutputFieldOrder,
-			promptFile.OutputNestedFieldOrder,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to parse output schema: %w", err)
-		}
-
-		if len(fields) > 0 {
-			responseStruct := codegen.GoStruct{
-				Name: responseName,
-				Comments: []string{
-					fmt.Sprintf(
-						"%s represents the output for %s",
-						responseName,
-						getPromptDescription(promptFile),
-					),
-				},
-				Fields:   fields,
-				IsInput:  false,
-				IsOutput: true,
-			}
-			structs = append(structs, responseStruct)
-		}
-
-		// Add nested structs from schema parsing with validation
-		for _, nestedStruct := range nestedStructs {
-			nestedStruct.IsInput = false
-			nestedStruct.IsOutput = false // Nested structs are neither input nor output, but can still have validation
-			structs = append(structs, nestedStruct)
-		}
-		allEnums = append(allEnums, enums...)
+	// Generate output struct if schema exists
+	if err := generateOutputStruct(promptFile, responseName, &structs, &allEnums); err != nil {
+		return fmt.Errorf("failed to generate output struct: %w", err)
 	}
 
 	if len(structs) == 0 {
@@ -263,6 +169,110 @@ func generateFromPromptFile(g codegen.Generator, promptFile *ast.PromptFile) err
 		return nil
 	}
 
+	return writeGeneratedCode(g, structs, allEnums, promptFile.Filename)
+}
+
+// generateInputStruct generates the input struct from prompt file schema.
+func generateInputStruct(promptFile *ast.PromptFile, requestName string, structs *[]codegen.GoStruct, allEnums *[]codegen.GoEnum) error {
+	return generateStruct(
+		promptFile.GetInputSchema(),
+		promptFile.GetRequiredInputFields(),
+		parser.SchemaTypeInput,
+		promptFile.InputFieldOrder,
+		promptFile.InputNestedFieldOrder,
+		requestName,
+		promptFile,
+		structs,
+		allEnums,
+		true,  // isInput
+		false, // isOutput
+	)
+}
+
+// generateOutputStruct generates the output struct from prompt file schema.
+func generateOutputStruct(promptFile *ast.PromptFile, responseName string, structs *[]codegen.GoStruct, allEnums *[]codegen.GoEnum) error {
+	return generateStruct(
+		promptFile.GetOutputSchema(),
+		promptFile.GetRequiredOutputFields(),
+		parser.SchemaTypeOutput,
+		promptFile.OutputFieldOrder,
+		promptFile.OutputNestedFieldOrder,
+		responseName,
+		promptFile,
+		structs,
+		allEnums,
+		false, // isInput
+		true,  // isOutput
+	)
+}
+
+// generateStruct is a common function to generate structs for both input and output schemas.
+func generateStruct(
+	schema any,
+	requiredFields []string,
+	schemaType parser.SchemaType,
+	fieldOrder []string,
+	nestedFieldOrder map[string][]string,
+	structName string,
+	promptFile *ast.PromptFile,
+	structs *[]codegen.GoStruct,
+	allEnums *[]codegen.GoEnum,
+	isInput bool,
+	isOutput bool,
+) error {
+	if schema == nil {
+		return nil
+	}
+
+	fields, enums, nestedStructs, err := parseSchemaWithNestedFieldOrder(
+		schema,
+		requiredFields,
+		schemaType,
+		fieldOrder,
+		nestedFieldOrder,
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(fields) > 0 {
+		*structs = append(*structs, codegen.GoStruct{
+			Name: structName,
+			Comments: []string{
+				fmt.Sprintf("%s represents the %s for %s", structName, getStructType(isInput), getPromptDescription(promptFile)),
+			},
+			Fields:   fields,
+			IsInput:  isInput,
+			IsOutput: isOutput,
+		})
+	}
+
+	addNestedStructs(structs, nestedStructs)
+	*allEnums = append(*allEnums, enums...)
+
+	return nil
+}
+
+// getStructType returns "input" or "output" based on the isInput flag.
+func getStructType(isInput bool) string {
+	if isInput {
+		return "input"
+	}
+
+	return "output"
+}
+
+// addNestedStructs adds nested structs to the main structs slice.
+func addNestedStructs(structs *[]codegen.GoStruct, nestedStructs []codegen.GoStruct) {
+	for _, nestedStruct := range nestedStructs {
+		nestedStruct.IsInput = false
+		nestedStruct.IsOutput = false // Nested structs are neither input nor output, but can still have validation
+		*structs = append(*structs, nestedStruct)
+	}
+}
+
+// writeGeneratedCode generates and writes the Go code to file.
+func writeGeneratedCode(g codegen.Generator, structs []codegen.GoStruct, allEnums []codegen.GoEnum, filename string) error {
 	// Generate Go code
 	code, err := GenerateGoCode(structs, allEnums, g.PackageName)
 	if err != nil {
@@ -270,7 +280,7 @@ func generateFromPromptFile(g codegen.Generator, promptFile *ast.PromptFile) err
 	}
 
 	// Determine output file path
-	outputFile := getOutputFilePath(g, promptFile.Filename)
+	outputFile := getOutputFilePath(g, filename)
 
 	// Write generated code to file
 	if err := os.WriteFile(outputFile, code, 0o600); err != nil {
@@ -293,11 +303,21 @@ func parseSchemaWithNestedFieldOrder(
 	// For now, we only support nested field order for JSON Schema
 	// Picoschema doesn't support nested objects yet
 	if parser.IsJSONSchema(schema) {
-		return parser.ParseJSONSchemaWithNestedFieldOrder(schema, requiredFields, schemaType, fieldOrder, nestedFieldOrder)
+		fields, enums, structs, err := parser.ParseJSONSchemaWithNestedFieldOrder(schema, requiredFields, schemaType, fieldOrder, nestedFieldOrder)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("failed to parse JSON schema with nested field order: %w", err)
+		}
+
+		return fields, enums, structs, nil
 	}
 
 	// Fall back to regular parsing for other schema types
-	return parser.ParseSchemaWithStructsAndFieldOrder(schema, requiredFields, schemaType, fieldOrder)
+	fields, enums, structs, err := parser.ParseSchemaWithStructsAndFieldOrder(schema, requiredFields, schemaType, fieldOrder)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to parse schema with structs and field order: %w", err)
+	}
+
+	return fields, enums, structs, nil
 }
 
 // getOutputFilePath determines the output file path.

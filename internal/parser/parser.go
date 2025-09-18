@@ -17,6 +17,14 @@ const (
 	minimumFrontmatterParts = 3
 )
 
+// SchemaFieldOrders holds all extracted field order information.
+type SchemaFieldOrders struct {
+	InputFieldOrder        []string
+	OutputFieldOrder       []string
+	InputNestedFieldOrder  map[string][]string
+	OutputNestedFieldOrder map[string][]string
+}
+
 // ParsePromptFile parses a dotprompt file and returns a PromptFile.
 func ParsePromptFile(filePath string) (*ast.PromptFile, error) {
 	// Validate and clean the file path to prevent path traversal attacks
@@ -70,26 +78,10 @@ func ParsePromptContent(content, filename string) (*ast.PromptFile, error) {
 		return nil, fmt.Errorf("failed to parse YAML frontmatter: %w", err)
 	}
 
-	// Extract field order from YAML for schema fields
-	inputFieldOrder, err := extractSchemaFieldOrder(frontmatterContent, "input", "schema")
+	// Extract field orders for input and output schemas
+	fieldOrders, err := extractAllSchemaFieldOrders(frontmatterContent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract input field order: %w", err)
-	}
-
-	outputFieldOrder, err := extractSchemaFieldOrder(frontmatterContent, "output", "schema")
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract output field order: %w", err)
-	}
-
-	// Extract nested field orders recursively
-	inputNestedFieldOrder, err := extractNestedSchemaFieldOrder(frontmatterContent, "input", "schema")
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract input nested field order: %w", err)
-	}
-
-	outputNestedFieldOrder, err := extractNestedSchemaFieldOrder(frontmatterContent, "output", "schema")
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract output nested field order: %w", err)
+		return nil, fmt.Errorf("failed to extract field orders: %w", err)
 	}
 
 	// Extract template content (everything after the second ---)
@@ -102,21 +94,41 @@ func ParsePromptContent(content, filename string) (*ast.PromptFile, error) {
 		Template:    template,
 	}
 
-	// Store field order information for later use
-	if inputFieldOrder != nil {
-		promptFile.InputFieldOrder = inputFieldOrder
-	}
-	if outputFieldOrder != nil {
-		promptFile.OutputFieldOrder = outputFieldOrder
-	}
-	if inputNestedFieldOrder != nil {
-		promptFile.InputNestedFieldOrder = inputNestedFieldOrder
-	}
-	if outputNestedFieldOrder != nil {
-		promptFile.OutputNestedFieldOrder = outputNestedFieldOrder
-	}
+	// Store field order information
+	promptFile.InputFieldOrder = fieldOrders.InputFieldOrder
+	promptFile.OutputFieldOrder = fieldOrders.OutputFieldOrder
+	promptFile.InputNestedFieldOrder = fieldOrders.InputNestedFieldOrder
+	promptFile.OutputNestedFieldOrder = fieldOrders.OutputNestedFieldOrder
 
 	return promptFile, nil
+}
+
+// extractAllSchemaFieldOrders extracts all field order information from YAML content.
+func extractAllSchemaFieldOrders(yamlContent string) (*SchemaFieldOrders, error) {
+	orders := &SchemaFieldOrders{}
+
+	var err error
+	orders.InputFieldOrder, err = extractSchemaFieldOrder(yamlContent, "input", "schema")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract input field order: %w", err)
+	}
+
+	orders.OutputFieldOrder, err = extractSchemaFieldOrder(yamlContent, "output", "schema")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract output field order: %w", err)
+	}
+
+	orders.InputNestedFieldOrder, err = extractNestedSchemaFieldOrder(yamlContent, "input", "schema")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract input nested field order: %w", err)
+	}
+
+	orders.OutputNestedFieldOrder, err = extractNestedSchemaFieldOrder(yamlContent, "output", "schema")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract output nested field order: %w", err)
+	}
+
+	return orders, nil
 }
 
 // extractSchemaFieldOrder extracts the field order from YAML schema using yaml.Node.
@@ -147,6 +159,7 @@ func findSchemaNode(node *yaml.Node, schemaType, schemaKey string) *yaml.Node {
 		if len(node.Content) == 0 {
 			return nil
 		}
+
 		return findSchemaNode(node.Content[0], schemaType, schemaKey)
 	}
 
@@ -260,16 +273,12 @@ func extractNestedSchemaFieldOrder(yamlContent, schemaType, schemaKey string) (m
 	// Find the schema node (input.schema or output.schema)
 	schemaNode := findSchemaNode(&node, schemaType, schemaKey)
 	if schemaNode == nil {
-		return nil, nil // No schema found, not an error
+		return make(map[string][]string), nil // No schema found, return empty map
 	}
 
 	// Extract nested field orders recursively
 	nestedOrders := make(map[string][]string)
 	extractNestedFieldOrdersRecursive(schemaNode, "", nestedOrders)
-
-	if len(nestedOrders) == 0 {
-		return nil, nil
-	}
 
 	return nestedOrders, nil
 }
@@ -283,41 +292,47 @@ func extractNestedFieldOrdersRecursive(node *yaml.Node, currentPath string, nest
 	// Look for "properties" node (JSON Schema) or direct field definitions (Picoschema)
 	propertiesNode := findPropertiesNode(node)
 	if propertiesNode != nil {
-		// JSON Schema format - extract field order from properties
-		fieldNames := extractFieldNamesFromPropertiesNode(propertiesNode)
-		if len(fieldNames) > 0 && currentPath != "" {
-			nestedOrders[currentPath] = fieldNames
-		}
-
-		// Recursively process nested objects in properties
-		for i := 0; i < len(propertiesNode.Content); i += 2 {
-			if i+1 >= len(propertiesNode.Content) {
-				break
-			}
-
-			keyNode := propertiesNode.Content[i]
-			valueNode := propertiesNode.Content[i+1]
-
-			if keyNode.Kind == yaml.ScalarNode && valueNode.Kind == yaml.MappingNode {
-				fieldName := keyNode.Value
-				var nestedPath string
-				if currentPath == "" {
-					nestedPath = fieldName
-				} else {
-					nestedPath = currentPath + "." + fieldName
-				}
-
-				// Check if this is an object type
-				if isObjectTypeNode(valueNode) {
-					extractNestedFieldOrdersRecursive(valueNode, nestedPath, nestedOrders)
-				}
-			}
-		}
-	} else {
-		// Picoschema format - check for nested objects directly
-		// For now, Picoschema doesn't support nested objects, so this is a placeholder
-		// for future extension
+		processPropertiesNodeRecursively(propertiesNode, currentPath, nestedOrders)
 	}
+	// Note: Picoschema format doesn't currently support nested objects
+}
+
+// processPropertiesNodeRecursively processes properties node and extracts nested field orders.
+func processPropertiesNodeRecursively(propertiesNode *yaml.Node, currentPath string, nestedOrders map[string][]string) {
+	// JSON Schema format - extract field order from properties
+	fieldNames := extractFieldNamesFromPropertiesNode(propertiesNode)
+	if len(fieldNames) > 0 && currentPath != "" {
+		nestedOrders[currentPath] = fieldNames
+	}
+
+	// Recursively process nested objects in properties
+	for i := 0; i < len(propertiesNode.Content); i += 2 {
+		if i+1 >= len(propertiesNode.Content) {
+			break
+		}
+
+		keyNode := propertiesNode.Content[i]
+		valueNode := propertiesNode.Content[i+1]
+
+		if keyNode.Kind == yaml.ScalarNode && valueNode.Kind == yaml.MappingNode {
+			fieldName := keyNode.Value
+			nestedPath := buildNestedPath(currentPath, fieldName)
+
+			// Check if this is an object type
+			if isObjectTypeNode(valueNode) {
+				extractNestedFieldOrdersRecursive(valueNode, nestedPath, nestedOrders)
+			}
+		}
+	}
+}
+
+// buildNestedPath constructs the nested path for a field.
+func buildNestedPath(currentPath, fieldName string) string {
+	if currentPath == "" {
+		return fieldName
+	}
+
+	return currentPath + "." + fieldName
 }
 
 // isObjectTypeNode checks if a YAML node represents an object type.
