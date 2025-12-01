@@ -125,8 +125,8 @@ func createBasePicoschemaField(fieldName string) codegen.GoField {
 	}
 
 	// Check for optional field marker
-	if strings.HasSuffix(fieldName, "?") {
-		field.JSONTag = strings.TrimSuffix(fieldName, "?")
+	if trimmed, ok := strings.CutSuffix(fieldName, "?"); ok {
+		field.JSONTag = trimmed
 		field.Name = naming.SchemaFieldToGoField(field.JSONTag)
 	}
 

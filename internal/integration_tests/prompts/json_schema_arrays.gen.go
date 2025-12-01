@@ -5,15 +5,15 @@ package prompts
 // JsonSchemaArraysInput represents the input for json schema arrays
 type JsonSchemaArraysInput struct {
 	// List of keywords
-	Keywords []string `json:"keywords"`
+	Keywords []string `json:"keywords" handlebars:"keywords"`
 	// List of ratings
-	Ratings []float64 `json:"ratings"`
+	Ratings []float64 `json:"ratings" handlebars:"ratings"`
 }
 
 // JsonSchemaArraysOutput represents the output for json schema arrays
 type JsonSchemaArraysOutput struct {
 	// Keywords that matched
-	MatchedKeywords []string `json:"matched_keywords"`
+	MatchedKeywords []string `json:"matched_keywords" handlebars:"matched_keywords"`
 	// Average of all ratings
-	AverageRating *float64 `json:"average_rating"`
+	AverageRating *float64 `json:"average_rating" handlebars:"average_rating"`
 }

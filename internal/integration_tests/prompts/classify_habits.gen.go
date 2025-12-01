@@ -7,17 +7,17 @@ import "fmt"
 // ClassifyHabitsInput represents the input for classify habits
 type ClassifyHabitsInput struct {
 	// The habit description to classify
-	Habit string `json:"habit"`
+	Habit string `json:"habit" handlebars:"habit"`
 }
 
 // ClassifyHabitsOutput represents the output for classify habits
 type ClassifyHabitsOutput struct {
 	// insightful explanation of why this habit fits the category
-	Explanation string `json:"explanation"`
+	Explanation string `json:"explanation" handlebars:"explanation"`
 	// The transformative category of the habit
-	TransformationCategory TransformationCategoryEnum `json:"transformation_category"`
+	TransformationCategory TransformationCategoryEnum `json:"transformation_category" handlebars:"transformation_category"`
 	// The developmental stage this habit represents
-	ImpactLevel ImpactLevelEnum `json:"impact_level"`
+	ImpactLevel ImpactLevelEnum `json:"impact_level" handlebars:"impact_level"`
 }
 
 // TransformationCategoryEnum represents valid transformation_category values

@@ -6,23 +6,23 @@ import "fmt"
 
 // MixedFormatsInput represents the input for mixed formats
 type MixedFormatsInput struct {
-	UserId      string   `json:"user_id"`
-	Preferences any      `json:"preferences"`
-	Role        RoleEnum `json:"role"`
-	Settings    any      `json:"settings"`
+	UserId      string   `json:"user_id" handlebars:"user_id"`
+	Preferences any      `json:"preferences" handlebars:"preferences"`
+	Role        RoleEnum `json:"role" handlebars:"role"`
+	Settings    any      `json:"settings" handlebars:"settings"`
 }
 
 // MixedFormatsOutput represents the output for mixed formats
 type MixedFormatsOutput struct {
-	UserProfile     UserProfile `json:"user_profile"`
-	Recommendations []string    `json:"recommendations"`
-	Success         bool        `json:"success"`
+	UserProfile     UserProfile `json:"user_profile" handlebars:"user_profile"`
+	Recommendations []string    `json:"recommendations" handlebars:"recommendations"`
+	Success         bool        `json:"success" handlebars:"success"`
 }
 
 // UserProfile represents
 type UserProfile struct {
-	Id       *string       `json:"id"`
-	UserRole *UserRoleEnum `json:"user_role"`
+	Id       *string       `json:"id" handlebars:"id"`
+	UserRole *UserRoleEnum `json:"user_role" handlebars:"user_role"`
 }
 
 // RoleEnum represents valid role values

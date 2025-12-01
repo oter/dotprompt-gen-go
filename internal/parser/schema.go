@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"slices"
 	"sort"
 	"strings"
 
@@ -78,15 +79,7 @@ func buildOrderedFieldNames(schemaFields map[string]any, fieldOrder []string) []
 
 		// Add any remaining fields not in the preserved order (edge case)
 		for fieldName := range schemaFields {
-			found := false
-			for _, orderedField := range fieldNames {
-				if orderedField == fieldName {
-					found = true
-
-					break
-				}
-			}
-			if !found {
+			if !slices.Contains(fieldNames, fieldName) {
 				fieldNames = append(fieldNames, fieldName)
 			}
 		}

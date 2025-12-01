@@ -7,31 +7,31 @@ import "fmt"
 // ComprehensiveEnumsInput represents the input for comprehensive enums
 type ComprehensiveEnumsInput struct {
 	// Task priority level
-	Priority PriorityEnum `json:"priority"`
+	Priority PriorityEnum `json:"priority" handlebars:"priority"`
 	// Approval status
-	Status StatusEnum `json:"status"`
+	Status StatusEnum `json:"status" handlebars:"status"`
 	// Complexity level with hyphens
-	Difficulty DifficultyEnum `json:"difficulty"`
+	Difficulty DifficultyEnum `json:"difficulty" handlebars:"difficulty"`
 	// Target language code
-	Language LanguageEnum `json:"language"`
+	Language LanguageEnum `json:"language" handlebars:"language"`
 	// Output format preference
-	Format FormatEnum `json:"format"`
+	Format FormatEnum `json:"format" handlebars:"format"`
 	// Confidence level as integer
-	ConfidenceLevel ConfidenceLevelEnum `json:"confidence_level"`
+	ConfidenceLevel ConfidenceLevelEnum `json:"confidence_level" handlebars:"confidence_level"`
 }
 
 // ComprehensiveEnumsOutput represents the output for comprehensive enums
 type ComprehensiveEnumsOutput struct {
 	// Processing result
-	Result ResultEnum `json:"result"`
+	Result ResultEnum `json:"result" handlebars:"result"`
 	// Detailed processing status
-	ProcessingStatus ProcessingStatusEnum `json:"processing_status"`
+	ProcessingStatus ProcessingStatusEnum `json:"processing_status" handlebars:"processing_status"`
 	// Error code if processing fails
-	ErrorCode *ErrorCodeEnum `json:"error_code"`
+	ErrorCode *ErrorCodeEnum `json:"error_code" handlebars:"error_code"`
 	// Output quality score
-	QualityScore QualityScoreEnum `json:"quality_score"`
+	QualityScore QualityScoreEnum `json:"quality_score" handlebars:"quality_score"`
 	// Result urgency level
-	Urgency *UrgencyEnum `json:"urgency"`
+	Urgency *UrgencyEnum `json:"urgency" handlebars:"urgency"`
 }
 
 // PriorityEnum represents valid priority values

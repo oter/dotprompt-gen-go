@@ -5,9 +5,9 @@ package prompts
 // OutputOnlyOutput represents the output for output only
 type OutputOnlyOutput struct {
 	// the generated response
-	GeneratedText *string `json:"generated_text"`
+	GeneratedText *string `json:"generated_text" handlebars:"generated_text"`
 	// number of words generated
-	WordCount *int `json:"word_count"`
+	WordCount *int `json:"word_count" handlebars:"word_count"`
 	// optional quality assessment
-	QualityScore *float64 `json:"quality_score"`
+	QualityScore *float64 `json:"quality_score" handlebars:"quality_score"`
 }

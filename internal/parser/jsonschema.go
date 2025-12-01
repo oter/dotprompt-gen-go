@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -419,15 +420,7 @@ func getPreservedOrderPropertyNames(properties map[string]any, fieldOrder []stri
 
 	// Add any remaining fields not in the preserved order (edge case)
 	for propName := range properties {
-		found := false
-		for _, orderedField := range propNames {
-			if orderedField == propName {
-				found = true
-
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(propNames, propName) {
 			propNames = append(propNames, propName)
 		}
 	}

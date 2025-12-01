@@ -7,32 +7,32 @@ import "fmt"
 // ValidationTagsInput represents the input for validation tags
 type ValidationTagsInput struct {
 	// Username for the account
-	UserName string `json:"user_name" validate:"required,min=3,max=50"`
+	UserName string `json:"user_name" validate:"required,min=3,max=50" handlebars:"user_name"`
 	// User email address
-	Email string `json:"email" validate:"required,email"`
+	Email string `json:"email" validate:"required,email" handlebars:"email"`
 	// User age
-	Age int `json:"age" validate:"required,min=18,max=120"`
+	Age int `json:"age" validate:"required,min=18,max=120" handlebars:"age"`
 	// Optional user biography
-	Bio         string      `json:"bio" validate:"max=500"`
-	Preferences Preferences `json:"preferences"`
+	Bio         string      `json:"bio" validate:"max=500" handlebars:"bio"`
+	Preferences Preferences `json:"preferences" handlebars:"preferences"`
 }
 
 // Preferences represents
 type Preferences struct {
-	// Enable notifications
-	Notifications bool `json:"notifications"`
 	// UI theme preference
-	Theme string `json:"theme" validate:"oneof=light dark auto"`
+	Theme string `json:"theme" validate:"oneof=light dark auto" handlebars:"theme"`
+	// Enable notifications
+	Notifications bool `json:"notifications" handlebars:"notifications"`
 }
 
 // ValidationTagsOutput represents the output for validation tags
 type ValidationTagsOutput struct {
 	// Generated user ID
-	UserId *string `json:"user_id" validate:"required,uuid4"`
+	UserId *string `json:"user_id" validate:"required,uuid4" handlebars:"user_id"`
 	// Account status
-	Status *StatusEnum `json:"status"`
+	Status *StatusEnum `json:"status" handlebars:"status"`
 	// Account creation timestamp
-	CreatedAt *string `validate:"required" db:"created_at" json:"created_at,omitempty"`
+	CreatedAt *string `db:"created_at" json:"created_at,omitempty" validate:"required" handlebars:"created_at"`
 }
 
 // StatusEnum represents valid status values

@@ -7,21 +7,21 @@ import "fmt"
 // JsonSchemaBasicInput represents the input for json schema basic
 type JsonSchemaBasicInput struct {
 	// The habit to analyze
-	Habit string `json:"habit"`
+	Habit string `json:"habit" handlebars:"habit"`
 	// Habit category
-	HabitCategory HabitCategoryEnum `json:"habit_category"`
+	HabitCategory HabitCategoryEnum `json:"habit_category" handlebars:"habit_category"`
 	// Number of words
-	WordCount int `json:"word_count"`
+	WordCount int `json:"word_count" handlebars:"word_count"`
 }
 
 // JsonSchemaBasicOutput represents the output for json schema basic
 type JsonSchemaBasicOutput struct {
 	// Generated summary
-	Summary string `json:"summary"`
+	Summary string `json:"summary" handlebars:"summary"`
 	// Confidence score
-	Confidence *float64 `json:"confidence"`
+	Confidence *float64 `json:"confidence" handlebars:"confidence"`
 	// Whether the input is valid
-	Valid bool `json:"valid"`
+	Valid bool `json:"valid" handlebars:"valid"`
 }
 
 // HabitCategoryEnum represents valid habit_category values

@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"sort"
+	"strings"
 )
 
 // GoField represents a field in a Go struct.
@@ -28,11 +29,13 @@ func (f GoField) StructTags() string {
 
 	// Check if user provided a custom json tag in ExtraTags
 	hasCustomJSON := false
+	hasCustomHandlebars := false
 	for tagName := range f.ExtraTags {
 		if tagName == "json" {
 			hasCustomJSON = true
-
-			break
+		}
+		if tagName == "handlebars" {
+			hasCustomHandlebars = true
 		}
 	}
 
@@ -55,20 +58,25 @@ func (f GoField) StructTags() string {
 		}
 	}
 
+	// Add handlebars tag (matching JSON tag) if not already provided
+	if !hasCustomHandlebars {
+		tags = append(tags, `handlebars:"`+f.JSONTag+`"`)
+	}
+
 	if len(tags) == 1 {
 		return tags[0]
 	}
 
-	// Join multiple tags with spaces
-	result := ""
+	// Join multiple tags with spaces using strings.Builder for efficiency
+	var builder strings.Builder
 	for i, tag := range tags {
 		if i > 0 {
-			result += " "
+			builder.WriteString(" ")
 		}
-		result += tag
+		builder.WriteString(tag)
 	}
 
-	return result
+	return builder.String()
 }
 
 // GoStruct represents a Go struct to be generated.

@@ -5,17 +5,17 @@ package prompts
 // ArrayTypesInput represents the input for array types
 type ArrayTypesInput struct {
 	// List of tags
-	Tags []string `json:"tags"`
+	Tags []string `json:"tags" handlebars:"tags"`
 	// List of scores
-	Scores []float64 `json:"scores"`
+	Scores []float64 `json:"scores" handlebars:"scores"`
 	// List of IDs
-	Ids []int `json:"ids"`
+	Ids []int `json:"ids" handlebars:"ids"`
 }
 
 // ArrayTypesOutput represents the output for array types
 type ArrayTypesOutput struct {
 	// Processed results
-	Results []string `json:"results"`
+	Results []string `json:"results" handlebars:"results"`
 	// Result counts
-	Counts []int `json:"counts"`
+	Counts []int `json:"counts" handlebars:"counts"`
 }

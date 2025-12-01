@@ -5,23 +5,23 @@ package prompts
 // SimpleTypesInput represents the input for simple types
 type SimpleTypesInput struct {
 	// the user name
-	Name string `json:"name"`
+	Name string `json:"name" handlebars:"name"`
 	// user age
-	Age int `json:"age"`
+	Age int `json:"age" handlebars:"age"`
 	// user height
-	Height float64 `json:"height"`
+	Height float64 `json:"height" handlebars:"height"`
 	// whether user is active
-	Active bool `json:"active"`
+	Active bool `json:"active" handlebars:"active"`
 	// additional metadata
-	Metadata any `json:"metadata"`
+	Metadata any `json:"metadata" handlebars:"metadata"`
 	// optional field
-	OptionalField string `json:"optional_field"`
+	OptionalField string `json:"optional_field" handlebars:"optional_field"`
 }
 
 // SimpleTypesOutput represents the output for simple types
 type SimpleTypesOutput struct {
 	// operation success
-	Success *bool `json:"success"`
+	Success *bool `json:"success" handlebars:"success"`
 	// result message
-	Message *string `json:"message"`
+	Message *string `json:"message" handlebars:"message"`
 }

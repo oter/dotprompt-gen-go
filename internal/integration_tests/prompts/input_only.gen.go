@@ -5,7 +5,7 @@ package prompts
 // InputOnlyInput represents the input for input only
 type InputOnlyInput struct {
 	// the search query
-	Query string `json:"query"`
+	Query string `json:"query" handlebars:"query"`
 	// optional result limit
-	Limit int `json:"limit"`
+	Limit int `json:"limit" handlebars:"limit"`
 }

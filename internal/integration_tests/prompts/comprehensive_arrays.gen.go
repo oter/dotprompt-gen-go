@@ -7,60 +7,60 @@ import "fmt"
 // ComprehensiveArraysInput represents the input for comprehensive arrays
 type ComprehensiveArraysInput struct {
 	// Array of strings
-	StringList []string `json:"string_list"`
+	StringList []string `json:"string_list" handlebars:"string_list"`
 	// Array of integers
-	IntegerList []int `json:"integer_list"`
+	IntegerList []int `json:"integer_list" handlebars:"integer_list"`
 	// Array of numbers
-	NumberList []float64 `json:"number_list"`
+	NumberList []float64 `json:"number_list" handlebars:"number_list"`
 	// Array of booleans
-	BooleanList []bool `json:"boolean_list"`
+	BooleanList []bool `json:"boolean_list" handlebars:"boolean_list"`
 	// Array of category enums
-	CategoryList []CategoryListItemEnum `json:"category_list"`
+	CategoryList []CategoryListItemEnum `json:"category_list" handlebars:"category_list"`
 	// Array of priority enums
-	PriorityList []PriorityListItemEnum `json:"priority_list"`
+	PriorityList []PriorityListItemEnum `json:"priority_list" handlebars:"priority_list"`
 	// Array of user objects
-	UserList []UserListItem `json:"user_list"`
+	UserList []UserListItem `json:"user_list" handlebars:"user_list"`
 	// Optional string array
-	OptionalTags []string `json:"optional_tags"`
+	OptionalTags []string `json:"optional_tags" handlebars:"optional_tags"`
 }
 
 // UserListItem represents item in user_list array
 type UserListItem struct {
-	Active bool   `json:"active"`
-	Age    int    `json:"age"`
-	Name   string `json:"name"`
+	Active bool   `json:"active" handlebars:"active"`
+	Age    int    `json:"age" handlebars:"age"`
+	Name   string `json:"name" handlebars:"name"`
 }
 
 // ComprehensiveArraysOutput represents the output for comprehensive arrays
 type ComprehensiveArraysOutput struct {
 	// Processed string results
-	ProcessedStrings []string `json:"processed_strings"`
+	ProcessedStrings []string `json:"processed_strings" handlebars:"processed_strings"`
 	// Calculated numeric results
-	CalculatedNumbers []float64 `json:"calculated_numbers"`
+	CalculatedNumbers []float64 `json:"calculated_numbers" handlebars:"calculated_numbers"`
 	// Status boolean flags
-	StatusFlags []bool `json:"status_flags"`
+	StatusFlags []bool `json:"status_flags" handlebars:"status_flags"`
 	// Selected category enums
-	SelectedCategories []SelectedCategoriesItemEnum `json:"selected_categories"`
+	SelectedCategories []SelectedCategoriesItemEnum `json:"selected_categories" handlebars:"selected_categories"`
 	// Processed user objects
-	ProcessedUsers []ProcessedUsersItem `json:"processed_users"`
+	ProcessedUsers []ProcessedUsersItem `json:"processed_users" handlebars:"processed_users"`
 	// Enum array in object
-	EnumArrayInObject EnumArrayInObject `json:"enum_array_in_object"`
+	EnumArrayInObject EnumArrayInObject `json:"enum_array_in_object" handlebars:"enum_array_in_object"`
 	// Summary integer counts
-	SummaryCounts []int `json:"summary_counts"`
+	SummaryCounts []int `json:"summary_counts" handlebars:"summary_counts"`
 }
 
 // ProcessedUsersItem represents item in processed_users array
 type ProcessedUsersItem struct {
-	Id         *string         `json:"id"`
-	UserStatus *UserStatusEnum `json:"user_status"`
+	Id         *string         `json:"id" handlebars:"id"`
+	UserStatus *UserStatusEnum `json:"user_status" handlebars:"user_status"`
 }
 
 // EnumArrayInObject represents Enum array in object
 type EnumArrayInObject struct {
 	// Enum array in object
-	EnumArray []EnumArrayItemEnum `json:"enum_array"`
+	EnumArray []EnumArrayItemEnum `json:"enum_array" handlebars:"enum_array"`
 	// String field
-	StringField *string `json:"string_field"`
+	StringField *string `json:"string_field" handlebars:"string_field"`
 }
 
 // CategoryListItemEnum represents valid category_list item values
